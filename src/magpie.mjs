@@ -17,7 +17,7 @@ export function resolvePort() {
 export async function readLocal(route, { port = resolvePort(), fetcher = fetch, timeoutMs = 5000, maxBytes = 2000000 } = {}) {
   const response = await fetcher(`http://127.0.0.1:${port}${route}`, {
     method: 'GET', redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
-    headers: { 'User-Agent': 'BlueDaFeiYu/0.2.0' },
+    headers: { 'User-Agent': 'Magpie-DaFeiYu/0.1.1' },
   });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const reader = response.body.getReader();

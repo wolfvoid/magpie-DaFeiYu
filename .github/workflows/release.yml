@@ -29,13 +29,13 @@ jobs:
         run: |
           test "$RELEASE_TAG" = "v$(node -p 'require("./package.json").version')"
           codesign --verify --deep --strict "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app"
-          ditto -c -k -X --keepParent --zlibCompressionLevel 9 "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app" "dist/DaFeiYu-magpie-${RELEASE_TAG}-macOS-arm64.zip"
+          ditto -c -k -X --keepParent --zlibCompressionLevel 9 "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app" "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip"
           cd dist
-          shasum -a 256 "DaFeiYu-magpie-${RELEASE_TAG}-macOS-arm64.zip" > SHA256SUMS.txt
-          unzip -tq "DaFeiYu-magpie-${RELEASE_TAG}-macOS-arm64.zip"
+          shasum -a 256 "magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip" > SHA256SUMS.txt
+          unzip -tq "magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip"
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG · 蓝色大肥鱼 Mac × Magpie" --notes-file "docs/releases/${RELEASE_TAG}.md" "dist/DaFeiYu-magpie-${RELEASE_TAG}-macOS-arm64.zip" dist/SHA256SUMS.txt
+          gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG · 蓝色大肥鱼 Mac × Magpie" --notes-file "docs/releases/${RELEASE_TAG}.md" "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip" dist/SHA256SUMS.txt

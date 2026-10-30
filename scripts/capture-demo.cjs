@@ -6,7 +6,7 @@ const { tmpdir } = require('node:os');
 const root = path.join(__dirname, '..');
 const profile = mkdtempSync(path.join(tmpdir(), 'dafeiyu-demo-'));
 app.setPath('userData', profile);
-app.setName('DaFeiYu-magpie Demo');
+app.setName('magpie-DaFeiYu Demo');
 const catalog = JSON.parse(readFileSync(path.join(root, 'assets/catalog.json'), 'utf8'));
 const now = Date.now();
 const snapshot = {

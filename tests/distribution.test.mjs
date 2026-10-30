@@ -16,5 +16,5 @@ test('Magpie discovers a committed page rather than loading Electron in its plug
   const page = readFileSync(new URL(metadata.magpie.page.file, root), 'utf8');
   assert.ok(page.includes('_magpie/bridge.js'));
   assert.ok(page.includes('不会自动安装或启动桌宠'));
-  assert.ok(page.includes('https://github.com/wolfvoid/DaFeiYu-magpie/releases/latest'));
+  assert.ok(page.includes('https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest'));
 });

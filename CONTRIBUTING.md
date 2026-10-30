@@ -1,6 +1,6 @@
 # Contributing
 
-欢迎改进 DaFeiYu-magpie。请保持 Magpie 接入只读、可断连降级，不发送模型请求。
+欢迎改进 magpie-DaFeiYu。请保持 Magpie 接入只读、可断连降级，不发送模型请求。
 
 ## 提交问题
 

@@ -1,83 +1,71 @@
 <div align="center">
 
-# 🐋 DaFeiYu-magpie
+# 🐋 magpie-DaFeiYu
 
-### 蓝色大肥鱼 · 让 Magpie 的工作状态变成桌边的陪伴
+### 让 AI 的忙碌，变成桌边的一条鱼。
 
-**A macOS desktop pet for Magpie — live request lights, multi-account quotas, and 106 animations.**
+**Mac 专用 · 接入 Magpie · 看请求、看额度、会放烟花**
 
 ![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-426B9A)
 ![Magpie](https://img.shields.io/badge/Magpie-local%20integration-C7475C)
-![Electron](https://img.shields.io/badge/Electron-43.3.0-6B9EB0)
+![Version](https://img.shields.io/badge/version-0.1.1-4C78A8)
 ![Code MIT](https://img.shields.io/badge/code-MIT-538476)
 ![Artwork noncommercial](https://img.shields.io/badge/artwork-noncommercial-D19A35)
 
-<img src="docs/images/desktop.png" alt="DaFeiYu-magpie：蓝色大肥鱼、横排账号额度、请求灯泡及桌面控制按钮；额度为演示数据" width="460">
+<img src="docs/images/desktop.png" alt="magpie-DaFeiYu：蓝色大肥鱼、请求灯泡与多账号额度" width="520">
 
-*截图使用演示账号和数值。角色与动画来自 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet)。*
+*演示图为合成账号与额度。角色动画来自 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet)。*
 
-[快速开始](#快速开始) · [功能](#功能) · [接入范围](#接入范围) · [致谢](#致谢与贡献来源) · [English](#english)
+[下载 App](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest) · [功能](#为什么是它) · [安装](#安装) · [致谢](#致谢与许可)
 
 </div>
 
-DaFeiYu-magpie 是一个为 **macOS + Magpie** 制作的独立桌宠：大肥鱼会在桌边玩耍、施法、放烟花；旁边的小灯泡告诉你有几个请求正在进行，账号百分比告诉你还剩多少额度。
+一只住在 Mac 桌边的蓝色大肥鱼。请求进来时亮起小灯泡，额度快用完时直接摆在眼前，空闲时吃饭、施法、放烟花——**让 Magpie 的状态不用再开面板确认。**
 
-不需要安装 DeepSeek Harness，也不依赖 Codex 客户端。只要请求经过本机 [Magpie](https://github.com/yetone/magpie)，无论来自哪个受支持的客户端，都可以通过网关状态参与联动。
+不需要 DSH，也不绑定 Codex。只要请求经过本机 Magpie，桌宠就能跟着忙起来。
 
-## 功能
+## 为什么是它
 
-| 功能 | 效果 |
+| 抓点 | 实际体验 |
 | --- | --- |
-| 106 段透明动画 | 鲜亮蓝配色，吃饭、玩耍、烟花、魔术、小节目随时点播 |
-| 减少重复 | 随机节目避开最近 15 个；呼吸待机抽取概率 15%，不连续播放 |
-| 工作陪伴 | 每两段工作状态动画穿插一个小动作；普通状态变化等当前动画播完再切换 |
-| 请求灯泡 | 几个进行中的请求亮几盏（含排队），空闲熄灭，断连变淡 |
-| 多账号额度 | 每个账号只显示一个百分比；多个窗口取最低值；未知或过期显示 `—%` |
-| API 余额 | Magpie 返回余额类型的账号（例如 DeepSeek）显示带币种的金额，不显示百分比；未知或过期显示「余额待刷新」 |
-| 使用中的账号标红 | 根据当前请求的实际路由匹配账号；珊瑚红表示正在使用，其他账号为灰蓝色 |
-| 横排额度栏 | 放在按钮上方；账号多时可左右滑动或用滚轮查看 |
-| 简单控制 | **⇄ 换动作**、**Ⅱ / ▶ 暂停或继续**、**••• 更多**；暂停时换动作仍保持暂停 |
-| 桌面互动 | 拖动、甩动弹跳、透明区域鼠标穿透；可贴近左右边缘，允许部分动画越出屏幕 |
-| 菜单栏找回 | 🐋 →「回到屏幕内」、隐藏、锁定位置、调整大小和退出 |
+| 💡 **几个请求，就亮几盏** | 进行中和排队的请求各有灯泡；没有请求时自动熄灭，断连变淡，不冒充“任务完成”。 |
+| 💰 **两种额度，两套读法** | 订阅账号显示剩余百分比；DeepSeek 等 API 钱包直接显示剩余金额，不再假装有百分比。 |
+| 👥 **多账号一眼扫完** | 账号横向排列，正在处理请求的账号标珊瑚红；账号多时可滚动，不挤占桌宠主体。 |
+| 🎬 **106 段动作，不只会待机** | 吃饭、玩耍、魔术、施法、烟花都有；避开最近 15 个动作，降低重复感。 |
+| 🖐 **真的能放在桌边** | 可拖动、甩动弹跳、贴边摆放；允许动作越出屏幕，不再被透明窗口卡在中间。 |
+| 🔒 **只看本机，不碰聊天** | 只读 Magpie 的本地状态；不调用模型、不读 Codex 数据库、不保存账号邮箱或提示词。 |
 
-额度与设置、全部动作点播在 **•••** 菜单中。默认不开机启动。
+底栏只有三件事：**换动作、暂停/继续、更多**。默认不开机启动，也不需要登录任何第三方账号。
 
-## 快速开始
+## 安装
 
-### 环境
+### 直接用 App（推荐）
 
-- **Apple Silicon Mac（arm64），macOS 12 或更新版本**；未验证 Intel Mac、Windows 或 Linux。
-- [Magpie](https://github.com/yetone/magpie) 已在本机启动。联动在 Magpie `0.1.1349` 上验证；接口变化可能需要更新适配器。
+1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载最新的 `magpie-DaFeiYu-*-macOS-arm64.zip`。
+2. 解压后把「蓝色大肥鱼.app」拖进「应用程序」，再从菜单栏打开。
+3. 启动本机 [Magpie](https://github.com/yetone/magpie)，请求灯泡和额度会自动接入。
 
-### 直接安装 App（推荐）
+**要求：Apple Silicon Mac（M 系列），macOS 12+。** 不支持 Intel Mac、Windows 或 Linux。
 
-1. 打开 [Releases](https://github.com/wolfvoid/DaFeiYu-magpie/releases/latest)，下载 `DaFeiYu-magpie-v0.2.0-macOS-arm64.zip`。
-2. 解压，将「蓝色大肥鱼.app」拖入「应用程序」，双击打开。更新前先从菜单栏退出旧版。
-3. 启动本机 Magpie，即可查看请求灯泡与账号额度。不需要 Node.js、Python 或 DSH。
+App 使用本地 ad-hoc 签名，没有 Apple Developer ID 签名或公证。若 macOS 拦截，请先核对下载来源，再到「系统设置 → 隐私与安全性」选择「仍要打开」；不要关闭 Gatekeeper。
 
-App 已包含 106 段动画，只有本地 ad-hoc 签名，**没有 Apple Developer ID 签名或公证**。如果 macOS 拦截，请先核对下载来源，再在「系统设置 → 隐私与安全性」查看是否提供「仍要打开」。本项目不提供关闭 Gatekeeper 的脚本。
+### Magpie 页面
 
-发布页附 SHA-256 校验文件。请下载上面命名的 ZIP，GitHub 自动生成的 “Source code.zip” 不是应用安装包。
-
-### 从 Magpie 非官方插件列表安装
-
-仓库带有 `magpie-plugin` Topic，并提供 Magpie 可识别的 **页面插件**。在「非官方插件 → 页面」搜索 `DaFeiYu`，点击安装；也可在终端运行：
+仓库带有 `magpie-plugin` Topic，并提供 Magpie 可识别的页面插件：
 
 ```bash
-magpie plugin add github:wolfvoid/DaFeiYu-magpie
+magpie plugin add github:wolfvoid/magpie-DaFeiYu
 ```
 
-安装后，Magpie 侧边栏出现「蓝色大肥鱼」使用指南。**这一步只安装页面，不会自动下载或启动桌面 App**；请按页面中的地址下载安装 ZIP。页面不请求数据权限，不运行模型或后台服务。桌面 App 使用本机只读接口，两者可独立卸载。
+安装后，Magpie 侧边栏会出现「蓝色大肥鱼」使用页。**页面不会自动安装或启动桌面 App**，桌面悬浮窗仍需下载 ZIP。
 
-GitHub 搜索索引与 Magpie 列表有缓存；新标签不保证立即显示，可刷新列表或用上面的明确仓库地址安装。
+### 从源码
 
-### 从源码运行
-
-开发环境需要 **Node.js 24+、npm、Python 3** 和 Git；首次需要联网下载依赖、Electron 和约 52 MB 动画素材。
+需要 Node.js 24+、npm、Python 3 和 Git：
 
 ```bash
-git clone https://github.com/wolfvoid/DaFeiYu-magpie.git
-cd DaFeiYu-magpie
+git clone https://github.com/wolfvoid/magpie-DaFeiYu.git
+cd magpie-DaFeiYu
 npm ci --ignore-scripts
 node node_modules/electron/install.js
 python3 scripts/download_assets.py
@@ -87,88 +75,34 @@ npm test
 npm start
 ```
 
-动画从上游固定提交下载，逐个校验大小与 Git blob SHA-1；不会把整套视频重复放进本仓库。Magpie 未启动时仍可播放桌宠，状态与额度显示不可用。
+动画从上游固定提交下载并逐文件校验，不重复塞进 Git 仓库。首次运行需要联网下载依赖和约 52 MB 素材。
 
-### 构建 Mac 应用
+## 它能知道什么
 
-```bash
-npm run package
-```
+**它显示 Magpie 能看见的请求，不是完整任务追踪器。**
 
-生成 `dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app`，可拖入「应用程序」后打开。macOS 上打包会添加本地 ad-hoc 签名，不等同于 Apple Developer ID 签名或公证。
+- 能看见：请求数、排队状态、当前实际使用的账号、Magpie 已缓存的额度。
+- 看不见：改了哪个文件、执行了哪条命令、是否等你审批，以及整个任务何时完成。
+- 不经过本机 Magpie 的请求不会出现；模型响应结束也不会被误判为任务完成。
+- 未知或过期额度显示 `—%` 或「余额待刷新」，不会凭空推算。
 
-v0.2.0 使用白名单收集运行文件，不打包开发依赖、测试、截图和重复图标；Electron 仅保留简体中文、繁体中文与英文语言资源。全部 106 段动画逐文件校验、原样保留，没有降画质或删除动作。Electron 运行库仍占主要空间。
+本地接口只连接 `127.0.0.1:3425`（支持自定义端口）：并发状态每 2 秒读取，额度和今日统计每 30 秒刷新。账号归属只在内存中换算为每次启动重新生成的代号。
 
-## 接入范围
+## 致谢与许可
 
-**它显示 Magpie 能看见的请求，不代表完整任务追踪。**
-
-- 能知道：有几个请求、是否排队、网关可见的工具等待状态、当前请求实际使用的账号、Magpie 已缓存的额度。
-- 不能知道：具体改了哪个文件、正在运行哪条本地命令、是否等待用户审批，以及整个任务是否完成。
-- 不经过本机 Magpie 的请求不可见；不会把一次模型响应结束误判为整个任务完成，也不会因此自动放烟花。
-- 标红只依据仍在进行的上游请求及其未结束的路由尝试；排队、已结束或账号无法确认时不标红。多个账号同时处理请求时可以一起标红。
-- Magpie 未返回额度的账号不能凭空推算；每个账号的显示百分比取其额度窗口最低剩余值，不表示还能提问多少次。
-
-### 本地只读接口
-
-| 数据 | 接口 | 频率 |
-| --- | --- | --- |
-| 请求状态 | `GET /v1/magpie/concurrency` | 每 2 秒 |
-| 账号归属 | `GET /v1/magpie/trace?after=…` | 有上游请求时增量读取 |
-| 额度快照 | `GET /v1/magpie/quotas/cards` | 每 30 秒 |
-| 今日统计 | `GET /v1/magpie/usage?period=today` | 每 30 秒 |
-
-仅连接 `127.0.0.1`，默认端口 `3425`；自定义端口从 `$XDG_CONFIG_HOME/magpie/settings.json`（默认 `~/.config/magpie/settings.json`）只读获取。额度使用 Magpie 缓存，超过 10 分钟或窗口已重置时显示待刷新；需要在 Magpie 中更新源数据。
-
-## 隐私与本地设置
-
-- 不调用模型、不主动聊天，不消耗额外推理额度；不修改 Magpie 的账户、模型或路由配置。
-- 不读取 Codex 数据库，不启动 Codex app-server；无遥测，无额外监听端口。
-- 不展示或保存账号邮箱、会话、提示词或聊天正文。路由响应只用于提取账号归属；缓存与界面使用每次启动重新生成的加盐账号代号。
-- 额度提示只展示套餐与序号，不展示邮箱。README 截图为独立演示数据。
-- 位置与偏好保存在 `~/Library/Application Support/BlueDaFeiYu-Codex/settings.json`。目录名保留早期版本的兼容性，当前联动来源是 Magpie。
-- 菜单栏退出后，删除 `.app` 即可卸载；设置可自行保留或删除。
-
-## 开发与验证
-
-```bash
-npm test                    # 调度、去重、账号匹配、额度和屏幕边界测试
-npm run check               # 106 个素材校验和 + 本机状态读取
-node scripts/check.mjs --quota
-npm start -- --smoke-test    # 实际界面、暂停/继续、灯泡、横排滚动与越界测试
-```
-
-界面检查需要 macOS 图形会话，并会暂时操作桌宠、保存本地 `qa/` 报告。报告、用户配置、依赖、动画下载文件和构建产物均不提交到 Git。
-
-核心文件：`src/magpie.mjs`（只读适配）、`src/animation.mjs`（动画调度）、`src/quota-display.mjs`（账号百分比）、`src/pet.*`（桌宠界面）、`src/main.cjs`（Mac 窗口与菜单）。
-
-欢迎通过 Issue 提交兼容性问题，或通过 PR 改进。请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)，不要附带真实账号、密钥或原始路由日志。
-
-## 致谢与贡献来源
-
-这个项目建立在以下作者的工作之上。**上游作者并不因此被声明为本仓库的直接提交者或背书者。**
-
-| 项目 / 作者 | 本项目中的来源与作用 |
+| 来源 | 贡献 |
 | --- | --- |
-| **[PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet)** | 大肥鱼形象、106 段动画、动作配置与初始选择器。动画固定于 `242fac13053ca6d7a5d316124df499013c2494a1`；保留 MIT 文本与素材使用说明。是最重要的视觉与动画来源。 |
-| **[yetone/magpie](https://github.com/yetone/magpie)** | 本地模型网关，以及额度、并发、路由接口与集成文档。桌宠通过只读接口联动，不修改或打包 Magpie。 |
-| **[yifanlu0227/DaFeiYu-codex-pet](https://github.com/yifanlu0227/DaFeiYu-codex-pet)** | 最初的大肥鱼桌宠与 Codex 宠物安装思路参考；本项目没有使用其 spritesheet，也不是其安装器。 |
-| **[bianbian-666/Codex-dafeiyu](https://github.com/bianbian-666/Codex-dafeiyu)** | 早期 Codex 状态联动方案参考；当前版本已移除 Codex 适配，改为 Magpie。 |
-| **[Electron](https://github.com/electron/electron)** | macOS 透明置顶窗口、视频渲染与桌面交互运行时。 |
+| [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) | 大肥鱼形象、106 段动画、动作配置与初始选择器；本项目最重要的视觉来源。 |
+| [yetone/magpie](https://github.com/yetone/magpie) | 本地模型网关，以及请求、额度、路由接口与集成文档。 |
+| [yifanlu0227/DaFeiYu-codex-pet](https://github.com/yifanlu0227/DaFeiYu-codex-pet) | 大肥鱼桌宠与安装思路的最初参考；本项目没有使用其 spritesheet。 |
+| [bianbian-666/Codex-dafeiyu](https://github.com/bianbian-666/Codex-dafeiyu) | 早期 Codex 状态联动方案参考；当前版本已改为 Magpie。 |
 
-本仓库新增的是 macOS 独立应用整合、Magpie 只读适配、多账号额度与请求灯泡、工作/待机调度、交互与界面。完整来源说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+本仓库新增代码采用 [MIT](LICENSE)；上游选择器保留其 [MIT 许可](licenses/dsh-pet-MIT.txt)。
 
-## 许可
+**角色动画、提示词、源视频等素材不属于 MIT，禁止商用。** 二创展示、介绍和分发必须保留 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) 来源；完整说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
-- 本仓库新增代码采用 [MIT](LICENSE)；上游选择器保留其 [MIT 许可](licenses/dsh-pet-MIT.txt)。
-- **角色动画、提示词、源视频等素材不属于 MIT 授权范围**。上游允许开源使用、**禁止商用**，衍生作品的介绍、展示和分发必须附原作者地址：[PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet)。README 展示图同样包含这些素材。
-- 下载器仅提供取得上游素材的可复现路径，不改变素材授权。请在分发二创或打包应用时保留来源与许可说明。
-- 独立社区项目，与 DeepSeek、OpenAI、Magpie 无官方隶属或合作关系；不声称是首个或唯一的同类项目。
+这是一个独立社区项目，与 DeepSeek、OpenAI、Magpie 无官方隶属关系。
 
-## English
+---
 
-**DaFeiYu-magpie** is an independent **macOS desktop pet for Magpie**, featuring the blue DaFeiYu character, 106 transparent animations, per-request light bulbs, and a horizontal multi-account quota strip. Active accounts turn coral red; other accounts stay slate blue. Each account displays one remaining percentage, using its most constrained quota window.
-
-It reads only the local Magpie gateway. It does not submit inference requests, change routing, or require DSH/Codex to run. Request activity is not full agent-task awareness. Download the ready-to-run ZIP from [Releases](https://github.com/wolfvoid/DaFeiYu-magpie/releases/latest) for Apple Silicon Macs running macOS 12 or later, or build from source with Node.js 24+ and Python 3. The app uses an ad-hoc signature; it has no Apple Developer ID signature or notarization.
-
-**Credits:** character, animation assets, configuration and initial picker code by [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet); gateway integration by [yetone/magpie](https://github.com/yetone/magpie). New code is MIT; upstream artwork is **noncommercial and requires attribution**, including in derived screenshots and distributions.
+**magpie-DaFeiYu** is a macOS desktop pet for Magpie: 106 animations, live request lights, subscription quotas, API wallet balances, and a local-only privacy model. Apple Silicon, macOS 12+.
