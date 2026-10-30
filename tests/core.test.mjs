@@ -12,12 +12,55 @@ const concurrency = { object: 'concurrency', requests: 0, waiting: 0, tools: 0 }
 const cards = { data: [{ name: 'Provider', plan: 'plus', user: 'PRIVATE', readAt: new Date(now).toISOString(),
   windows: [{ name: '7 days', used: 25, resetsAt: new Date(now + 60000).toISOString() }] }] };
 
+test('API balances retain currency and coexist with subscription percentages', () => {
+  const quota = normalizeCards({ data: [...cards.data,
+    { provider: 'deepseek', kind: 'balance', balance: '¥12.34', readAt: new Date(now).toISOString(), windows: [] },
+    { provider: 'other', kind: 'balance', balance: '$0.00', readAt: new Date(now).toISOString(), windows: [{ used: 20 }] },
+  ] }, now);
+  assert.equal(quota.ok, true);
+  assert.equal(quota.windows.length, 1);
+  const activity = { available: true, observedAt: now, activeAccountIds: [quota.accounts[1].accountId] };
+  const badges = accountPercentages(quota, activity, now);
+  assert.deepEqual(badges.map(badge => badge.text), ['75%', '¥12.34', '$0.00']);
+  assert.equal(badges[1].active, true);
+  assert.equal(accountPercentages(quota, activity, now + 600001)[1].text, '余额待刷新');
+});
+
+test('balance-only accounts work and invalid or undated balances never become percentages', () => {
+  for (const balance of ['¥0.00', 'USD 4.25', '¥-0.01']) {
+    const quota = normalizeCards({ data: [{ kind: 'balance', balance, readAt: new Date(now).toISOString() }] }, now);
+    assert.equal(quota.ok, true);
+    assert.equal(accountPercentages(quota, null, now)[0].text, balance);
+  }
+  for (const balance of [null, 12, 'PRIVATE sk-secret', '', 'NaN']) {
+    const quota = normalizeCards({ data: [{ kind: 'balance', balance, readAt: new Date(now).toISOString() }] }, now);
+    assert.equal(quota.ok, false);
+    assert.equal(accountPercentages(quota, null, now)[0].text, '余额待刷新');
+    assert.ok(!JSON.stringify(quota).includes('sk-secret'));
+  }
+  const undated = normalizeCards({ data: [{ kind: 'balance', balance: '¥5.00' }] }, now);
+  assert.equal(accountPercentages(undated, null, now)[0].available, false);
+});
+
 test('Magpie distinguishes active requests, queues and client tools', () => {
   assert.equal(chooseActivity({ ...concurrency, requests: 2, waiting: 1 }).state, 'thinking');
   assert.equal(chooseActivity({ ...concurrency, requests: 1, waiting: 1 }).state, 'waiting');
   assert.equal(chooseActivity({ ...concurrency, tools: 1 }).state, 'working');
   assert.equal(chooseActivity(concurrency).state, 'idle');
   assert.notEqual(chooseActivity(concurrency).state, 'success');
+});
+
+test('malformed cards are isolated and future-dated balances are not fresh', () => {
+  const quota = normalizeCards({ data: [null, 'invalid', ...cards.data,
+    { kind: 'balance', balance: '¥1.00', readAt: new Date(now + 10000).toISOString() },
+    { windows: [null] },
+  ] }, now);
+  assert.equal(quota.ok, true);
+  const badges = accountPercentages(quota, { available: true, observedAt: now + 1,
+    activeAccountIds: [quota.accounts[0].accountId] }, now);
+  assert.equal(badges[0].text, '75%');
+  assert.equal(badges[0].active, false);
+  assert.equal(badges[1].text, '余额待刷新');
 });
 
 test('missing and incompatible Magpie states are unknown, not idle', () => {

@@ -91,9 +91,18 @@ export function normalizeCards(data, now = Date.now()) {
   const windows = [];
   const accounts = [];
   for (const [index, card] of (Array.isArray(data?.data) ? data.data : []).entries()) {
+    if (!card || typeof card !== 'object') continue;
     const accountId = accountKey(card.provider || '', card.user || `unknown-${index}`);
-    accounts.push({ accountId, label: `${card.name || '订阅'} · ${card.plan || '账户'} #${index + 1}` });
+    const kind = card.kind === 'balance' ? 'balance' : 'subscription';
+    const balance = typeof card.balance === 'string' &&
+      /^(?:[¥￥$€£]\s*-?\d+(?:,\d{3})*(?:\.\d+)?|(?:CNY|USD|EUR|GBP)\s*-?\d+(?:\.\d+)?|-?\d+(?:\.\d+)?\s*(?:CNY|USD|EUR|GBP))$/.test(card.balance.trim())
+      ? card.balance.trim() : null;
+    const readAt = Date.parse(card.readAt);
+    accounts.push({ accountId, label: `${card.name || '订阅'} · ${card.plan || '账户'} #${index + 1}`,
+      kind, ...(kind === 'balance' ? { balance, readAt: Number.isFinite(readAt) ? readAt : null } : {}) });
+    if (kind === 'balance') continue;
     for (const window of Array.isArray(card.windows) ? card.windows : []) {
+      if (!window || typeof window !== 'object') continue;
       if (typeof window.used !== 'number' || !Number.isFinite(window.used)) continue;
       const used = Math.max(0, Math.min(100, window.used));
       const readAt = Date.parse(card.readAt);
@@ -104,8 +113,9 @@ export function normalizeCards(data, now = Date.now()) {
         stale: !Number.isFinite(readAt) || now - readAt > 600000 });
     }
   }
-  return { ok: windows.length > 0, windows, accounts, observedAt: now,
-    error: windows.length ? null : 'Magpie 尚无可显示的额度；请在 Magpie 中检查订阅' };
+  const ok = windows.length > 0 || accounts.some(account => account.kind === 'balance' && account.balance !== null);
+  return { ok, windows, accounts, observedAt: now,
+    error: ok ? null : 'Magpie 尚无可显示的额度或余额；请在 Magpie 中检查账户' };
 }
 
 export async function readQuota(options = {}) {

@@ -57,7 +57,7 @@ function renderQuota() {
     badge.classList.toggle('active', account.active);
     badge.classList.toggle('unavailable', !account.available);
     badge.textContent = account.text;
-    badge.title = `${account.label} · ${account.active ? '正在使用' : '当前未确认有请求使用'} · ${account.available ? '剩余 ' + account.text + '（取最低额度窗口）' : '额度待刷新'}`;
+    badge.title = `${account.label} · ${account.active ? '正在使用' : '当前未确认有请求使用'} · ${account.available ? '剩余 ' + account.text + (account.kind === 'balance' ? '（Magpie 缓存余额）' : '（取最低额度窗口）') : account.kind === 'balance' ? '余额待刷新' : '额度待刷新'}`;
     badge.setAttribute('aria-label', badge.title);
     container.append(badge);
   }

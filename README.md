@@ -33,6 +33,7 @@ DaFeiYu-magpie 是一个为 **macOS + Magpie** 制作的独立桌宠：大肥鱼
 | 工作陪伴 | 每两段工作状态动画穿插一个小动作；普通状态变化等当前动画播完再切换 |
 | 请求灯泡 | 几个进行中的请求亮几盏（含排队），空闲熄灭，断连变淡 |
 | 多账号额度 | 每个账号只显示一个百分比；多个窗口取最低值；未知或过期显示 `—%` |
+| API 余额 | Magpie 返回余额类型的账号（例如 DeepSeek）显示带币种的金额，不显示百分比；未知或过期显示「余额待刷新」 |
 | 使用中的账号标红 | 根据当前请求的实际路由匹配账号；珊瑚红表示正在使用，其他账号为灰蓝色 |
 | 横排额度栏 | 放在按钮上方；账号多时可左右滑动或用滚轮查看 |
 | 简单控制 | **⇄ 换动作**、**Ⅱ / ▶ 暂停或继续**、**••• 更多**；暂停时换动作仍保持暂停 |
@@ -50,13 +51,25 @@ DaFeiYu-magpie 是一个为 **macOS + Magpie** 制作的独立桌宠：大肥鱼
 
 ### 直接安装 App（推荐）
 
-1. 打开 [Releases](https://github.com/wolfvoid/DaFeiYu-magpie/releases/latest)，下载 `DaFeiYu-magpie-v0.1.0-macOS-arm64.zip`。
+1. 打开 [Releases](https://github.com/wolfvoid/DaFeiYu-magpie/releases/latest)，下载 `DaFeiYu-magpie-v0.2.0-macOS-arm64.zip`。
 2. 解压，将「蓝色大肥鱼.app」拖入「应用程序」，双击打开。更新前先从菜单栏退出旧版。
 3. 启动本机 Magpie，即可查看请求灯泡与账号额度。不需要 Node.js、Python 或 DSH。
 
 App 已包含 106 段动画，只有本地 ad-hoc 签名，**没有 Apple Developer ID 签名或公证**。如果 macOS 拦截，请先核对下载来源，再在「系统设置 → 隐私与安全性」查看是否提供「仍要打开」。本项目不提供关闭 Gatekeeper 的脚本。
 
 发布页附 SHA-256 校验文件。请下载上面命名的 ZIP，GitHub 自动生成的 “Source code.zip” 不是应用安装包。
+
+### 从 Magpie 非官方插件列表安装
+
+仓库带有 `magpie-plugin` Topic，并提供 Magpie 可识别的 **页面插件**。在「非官方插件 → 页面」搜索 `DaFeiYu`，点击安装；也可在终端运行：
+
+```bash
+magpie plugin add github:wolfvoid/DaFeiYu-magpie
+```
+
+安装后，Magpie 侧边栏出现「蓝色大肥鱼」使用指南。**这一步只安装页面，不会自动下载或启动桌面 App**；请按页面中的地址下载安装 ZIP。页面不请求数据权限，不运行模型或后台服务。桌面 App 使用本机只读接口，两者可独立卸载。
+
+GitHub 搜索索引与 Magpie 列表有缓存；新标签不保证立即显示，可刷新列表或用上面的明确仓库地址安装。
 
 ### 从源码运行
 
@@ -83,6 +96,8 @@ npm run package
 ```
 
 生成 `dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app`，可拖入「应用程序」后打开。macOS 上打包会添加本地 ad-hoc 签名，不等同于 Apple Developer ID 签名或公证。
+
+v0.2.0 使用白名单收集运行文件，不打包开发依赖、测试、截图和重复图标；Electron 仅保留简体中文、繁体中文与英文语言资源。全部 106 段动画逐文件校验、原样保留，没有降画质或删除动作。Electron 运行库仍占主要空间。
 
 ## 接入范围
 

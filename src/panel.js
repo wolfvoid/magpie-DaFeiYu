@@ -1,3 +1,5 @@
+import { accountPercentages } from './quota-display.mjs';
+
 const api = window.pet;
 let catalog;
 let lastQuota;
@@ -41,9 +43,22 @@ function renderQuota(quota) {
     row.append(label, meter, reset);
     container.append(row);
   }
+  for (const account of accountPercentages(quota).filter(account => account.kind === 'balance')) {
+    const row = document.createElement('div');
+    row.className = 'quota-row';
+    const label = document.createElement('div');
+    label.className = 'quota-label';
+    const name = document.createElement('span');
+    name.textContent = account.label;
+    const balance = document.createElement('strong');
+    balance.textContent = account.text;
+    label.append(name, balance);
+    row.append(label);
+    container.append(row);
+  }
   const stale = quota.observedAt && Date.now() - quota.observedAt > 240000;
   document.querySelector('#quota-time').textContent = quota.observedAt ?
-    `${quota.ok ? 'Magpie 缓存额度 · 剩余比例' : '查询未成功'} · ${new Date(quota.observedAt).toLocaleTimeString('zh-CN')}${stale ? ' · 请刷新' : ''}。每 30 秒同步；过期请在 Magpie 刷新。` : '正在读取 Magpie 额度…';
+    `${quota.ok ? 'Magpie 缓存 · 订阅额度 / API 余额' : '查询未成功'} · ${new Date(quota.observedAt).toLocaleTimeString('zh-CN')}${stale ? ' · 请刷新' : ''}。每 30 秒同步；过期请在 Magpie 刷新。` : '正在读取 Magpie 额度…';
   document.querySelector('#usage').textContent = quota.usage ? `Magpie 今日：${quota.usage.calls} 次请求 · ${quota.usage.errors} 次错误（按 Magpie 统计口径）` : '';
 }
 
