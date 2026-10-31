@@ -13,6 +13,68 @@ $Marker = '.dafeiyu-install'
 $StartMenuDir = [IO.Path]::GetFullPath((Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'))
 $ShortcutPath = Join-Path $StartMenuDir "$AppName.lnk"
 
+# WScript.Shell saves shortcut filenames through the system code page.
+# Use the Unicode Shell Link interface for Chinese names on any Windows locale.
+Add-Type -TypeDefinition @'
+using System;
+using System.IO;
+using System.Text;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+
+namespace DaFeiYu {
+    [ComImport, Guid("00021401-0000-0000-C000-000000000046")]
+    internal class ShellLink {}
+
+    [ComImport, Guid("000214F9-0000-0000-C000-000000000046"),
+     InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IShellLinkW {
+        void GetPath([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder path, int count, IntPtr data, uint flags);
+        void GetIDList(out IntPtr list);
+        void SetIDList(IntPtr list);
+        void GetDescription([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder text, int count);
+        void SetDescription([MarshalAs(UnmanagedType.LPWStr)] string text);
+        void GetWorkingDirectory([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder path, int count);
+        void SetWorkingDirectory([MarshalAs(UnmanagedType.LPWStr)] string path);
+        void GetArguments([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder text, int count);
+        void SetArguments([MarshalAs(UnmanagedType.LPWStr)] string text);
+        void GetHotkey(out short hotkey);
+        void SetHotkey(short hotkey);
+        void GetShowCmd(out int command);
+        void SetShowCmd(int command);
+        void GetIconLocation([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder path, int count, out int index);
+        void SetIconLocation([MarshalAs(UnmanagedType.LPWStr)] string path, int index);
+        void SetRelativePath([MarshalAs(UnmanagedType.LPWStr)] string path, uint reserved);
+        void Resolve(IntPtr window, uint flags);
+        void SetPath([MarshalAs(UnmanagedType.LPWStr)] string path);
+    }
+
+    public static class Shortcut {
+        public static string Target(string path) {
+            object instance = new ShellLink();
+            try {
+                ((IPersistFile)instance).Load(path, 0);
+                var target = new StringBuilder(32768);
+                ((IShellLinkW)instance).GetPath(target, target.Capacity, IntPtr.Zero, 0);
+                return target.ToString();
+            } finally { Marshal.FinalReleaseComObject(instance); }
+        }
+
+        public static void Save(string path, string target) {
+            object instance = new ShellLink();
+            try {
+                var link = (IShellLinkW)instance;
+                link.SetPath(target);
+                link.SetWorkingDirectory(Path.GetDirectoryName(target));
+                link.SetDescription("BlueDaFeiYu - Magpie desktop companion");
+                link.SetIconLocation(target, 0);
+                ((IPersistFile)instance).Save(path, true);
+            } finally { Marshal.FinalReleaseComObject(instance); }
+        }
+    }
+}
+'@
+
 function Assert-AppDirectory([string]$Candidate) {
     $Resolved = [IO.Path]::GetFullPath($Candidate)
     if ([IO.Path]::GetDirectoryName($Resolved) -ine $ProgramsDir -or
@@ -33,7 +95,8 @@ function Remove-AppDirectory([string]$Candidate) {
 }
 
 function Confirm-AppStopped {
-    if (Get-Process -Name 'BlueDaFeiYu' -ErrorAction SilentlyContinue) {
+    if (Get-Process -Name 'BlueDaFeiYu' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Path -ieq $ExePath }) {
         throw 'Exit BlueDaFeiYu from its tray menu, then run this script again.'
     }
 }
@@ -51,8 +114,9 @@ if ($Uninstall) {
     Confirm-AppStopped
     Remove-AppDirectory $InstallDir
     if (Test-Path -LiteralPath $ShortcutPath) {
-        $Shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($ShortcutPath)
-        if ($Shortcut.TargetPath -ieq $ExePath) { Remove-Item -LiteralPath $ShortcutPath -Force }
+        if ([DaFeiYu.Shortcut]::Target($ShortcutPath) -ieq $ExePath) {
+            Remove-Item -LiteralPath $ShortcutPath -Force
+        }
     }
     Write-Host 'Uninstalled. Your preferences in AppData\Roaming\BlueDaFeiYu-Codex were preserved.'
     exit 0
@@ -86,15 +150,11 @@ try {
     Move-Item -LiteralPath $StagingDir -Destination $InstallDir
     $InstalledNew = $true
     New-Item -ItemType Directory -Path $StartMenuDir -Force | Out-Null
-    $Shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($ShortcutPath)
-    if ((Test-Path -LiteralPath $ShortcutPath) -and $Shortcut.TargetPath -ine $ExePath) {
+    if ((Test-Path -LiteralPath $ShortcutPath) -and
+        [DaFeiYu.Shortcut]::Target($ShortcutPath) -ine $ExePath) {
         throw "An unrelated Start menu shortcut already exists: $ShortcutPath"
     }
-    $Shortcut.TargetPath = $ExePath
-    $Shortcut.WorkingDirectory = $InstallDir
-    $Shortcut.Description = 'BlueDaFeiYu - Magpie desktop companion'
-    $Shortcut.IconLocation = "$ExePath,0"
-    $Shortcut.Save()
+    [DaFeiYu.Shortcut]::Save($ShortcutPath, $ExePath)
 } catch {
     if ($InstalledNew) { Remove-AppDirectory $InstallDir }
     if (Test-Path -LiteralPath $BackupDir) {

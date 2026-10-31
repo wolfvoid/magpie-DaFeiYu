@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,7 +47,7 @@ test('Windows ZIP preserves Unicode names, binary contents and the installer', t
 
 test('Windows installer upgrades safely, rejects unrelated directories and retains user data',
   { skip: process.platform !== 'win32' }, t => {
-    const fixture = mkdtempSync(join(tmpdir(), 'dafeiyu install '));
+    const fixture = realpathSync.native(mkdtempSync(join(tmpdir(), 'dafeiyu install \u6d4b\u8bd5 ')));
     t.after(() => rmSync(fixture, { recursive: true, force: true }));
     const release = join(fixture, 'release');
     const app = join(release, `${APP_NAME}-win32-x64`);
@@ -73,8 +73,16 @@ test('Windows installer upgrades safely, rejects unrelated directories and retai
     assert.equal(readFileSync(join(installed, 'BlueDaFeiYu.exe'), 'utf8'), 'version one');
     const shortcut = join(roaming, 'Microsoft/Windows/Start Menu/Programs', `${APP_NAME}.lnk`);
     assert.ok(existsSync(shortcut));
+    const managedShortcut = readFileSync(shortcut);
     writeFileSync(join(installed, 'old-file.txt'), 'obsolete');
     writeFileSync(join(app, 'BlueDaFeiYu.exe'), 'version two');
+    writeFileSync(shortcut, 'unrelated shortcut file');
+    assert.throws(() => run(script));
+    assert.equal(readFileSync(shortcut, 'utf8'), 'unrelated shortcut file');
+    assert.equal(readFileSync(join(installed, 'BlueDaFeiYu.exe'), 'utf8'), 'version one');
+    assert.equal(readFileSync(join(installed, 'old-file.txt'), 'utf8'), 'obsolete');
+    assert.equal(readFileSync(preferences, 'utf8'), '{"paused":true}');
+    writeFileSync(shortcut, managedShortcut);
     run(script);
     assert.equal(readFileSync(join(installed, 'BlueDaFeiYu.exe'), 'utf8'), 'version two');
     assert.equal(existsSync(join(installed, 'old-file.txt')), false);
