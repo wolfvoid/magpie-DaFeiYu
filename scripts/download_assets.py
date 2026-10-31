@@ -6,7 +6,7 @@ import urllib.request
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-manifest = json.loads((root / 'assets/upstream.json').read_text())
+manifest = json.loads((root / 'assets/upstream.json').read_text(encoding='utf-8'))
 destination = root / 'assets/webm'
 destination.mkdir(parents=True, exist_ok=True)
 

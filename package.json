@@ -1,13 +1,13 @@
 {
   "name": "magpie-dafeiyu",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
-  "description": "magpie-DaFeiYu — a macOS desktop pet for Magpie with live request lights, quota percentages and API wallet balances.",
+  "description": "magpie-DaFeiYu — a macOS and Windows desktop pet for Magpie with live request lights, quota percentages and API wallet balances.",
   "repository": { "type": "git", "url": "https://github.com/wolfvoid/magpie-DaFeiYu.git" },
   "homepage": "https://github.com/wolfvoid/magpie-DaFeiYu#readme",
   "author": "wolfvoid",
   "license": "MIT",
-  "keywords": ["magpie", "macos", "desktop-pet", "dafeiyu", "deepseek", "electron", "quota-monitor"],
+  "keywords": ["magpie", "macos", "windows", "desktop-pet", "dafeiyu", "deepseek", "electron", "quota-monitor"],
   "files": ["magpie", "LICENSE", "THIRD_PARTY_NOTICES.md", "licenses"],
   "magpie": {
     "page": {
@@ -19,7 +19,7 @@
     "permissions": []
   },
   "scripts": {
-    "build": "esbuild src/vendor/pickers.ts --format=esm --outfile=src/pickers.mjs",
+    "build": "node scripts/prepare.mjs && esbuild src/vendor/pickers.ts --format=esm --outfile=src/pickers.mjs",
     "start": "electron src/main.cjs",
     "test": "node --test tests/*.test.mjs",
     "check": "node scripts/check.mjs",

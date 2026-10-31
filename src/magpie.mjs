@@ -5,10 +5,11 @@ import { createHmac, randomBytes } from 'node:crypto';
 
 const identitySalt = randomBytes(32);
 const accountKey = (provider, user) => createHmac('sha256', identitySalt).update(JSON.stringify([provider, user])).digest('hex');
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
-export function resolvePort() {
+export function resolvePort({ env = process.env, home = homedir() } = {}) {
   try {
-    const settings = JSON.parse(readFileSync(join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'magpie/settings.json'), 'utf8'));
+    const settings = JSON.parse(readFileSync(join(env.XDG_CONFIG_HOME || join(home, '.config'), 'magpie', 'settings.json'), 'utf8'));
     if (Number.isInteger(settings.port) && settings.port > 0 && settings.port <= 65535) return settings.port;
   } catch {}
   return 3425;
@@ -17,7 +18,7 @@ export function resolvePort() {
 export async function readLocal(route, { port = resolvePort(), fetcher = fetch, timeoutMs = 5000, maxBytes = 2000000 } = {}) {
   const response = await fetcher(`http://127.0.0.1:${port}${route}`, {
     method: 'GET', redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
-    headers: { 'User-Agent': 'Magpie-DaFeiYu/0.1.1' },
+    headers: { 'User-Agent': `Magpie-DaFeiYu/${version}` },
   });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const reader = response.body.getReader();

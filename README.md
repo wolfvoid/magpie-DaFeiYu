@@ -4,11 +4,12 @@
 
 ### 让 AI 的忙碌，变成桌边的一条鱼。
 
-**Mac 专用 · 接入 Magpie · 看请求、看额度、会放烟花**
+**Windows · macOS · 接入 Magpie · 看请求、看额度、会放烟花**
 
-![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-426B9A)
+![Windows 10+ x64](https://img.shields.io/badge/Windows-10%2B%20x64-426B9A)
+![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-4C78A8)
 ![Magpie](https://img.shields.io/badge/Magpie-local%20integration-C7475C)
-![Version](https://img.shields.io/badge/version-0.1.1-4C78A8)
+![Version](https://img.shields.io/badge/version-0.1.2-538476)
 ![Code MIT](https://img.shields.io/badge/code-MIT-538476)
 ![Artwork noncommercial](https://img.shields.io/badge/artwork-noncommercial-D19A35)
 
@@ -20,7 +21,7 @@
 
 </div>
 
-一只住在 Mac 桌边的蓝色大肥鱼。请求进来时亮起小灯泡，额度快用完时直接摆在眼前，空闲时吃饭、施法、放烟花——**让 Magpie 的状态不用再开面板确认。**
+一只住在桌边的蓝色大肥鱼——Windows 和 Mac 都住得下。请求进来时亮起小灯泡，额度快用完时直接摆在眼前，空闲时吃饭、施法、放烟花——**让 Magpie 的状态不用再开面板确认。**
 
 不需要 DSH，也不绑定 Codex。只要请求经过本机 Magpie，桌宠就能跟着忙起来。
 
@@ -35,19 +36,40 @@
 | 🖐 **真的能放在桌边** | 可拖动、甩动弹跳、贴边摆放；允许动作越出屏幕，不再被透明窗口卡在中间。 |
 | 🔒 **只看本机，不碰聊天** | 只读 Magpie 的本地状态；不调用模型、不读 Codex 数据库、不保存账号邮箱或提示词。 |
 
-底栏只有三件事：**换动作、暂停/继续、更多**。默认不开机启动，也不需要登录任何第三方账号。
+底栏只有三件事：**换动作、暂停/继续、更多**。两个平台都默认不开机启动，也不需要登录任何第三方账号。Windows 安装只写入当前用户目录，无需管理员权限。
 
 ## 安装
 
 ### 直接用 App（推荐）
 
-1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载最新的 `magpie-DaFeiYu-*-macOS-arm64.zip`。
+先选与系统匹配的压缩包：Windows 10+ x64 下载 `magpie-DaFeiYu-v0.1.2-Windows-x64.zip`；Apple Silicon Mac（M 系列，macOS 12+）下载 `magpie-DaFeiYu-v0.1.2-macOS-arm64.zip`。压缩包名称里的系统后缀就是目标平台，请勿混用。
+
+**Windows 10+ x64**
+
+1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.2-Windows-x64.zip` 并解压。
+2. 想免安装使用，进入解压后的 `蓝色大肥鱼-win32-x64` 文件夹，双击 `BlueDaFeiYu.exe`。
+3. 想装进当前用户账户，就在解压目录里执行：
+
+   ```powershell
+   powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
+   ```
+
+   安装到 `%LocalAppData%\Programs\magpie-DaFeiYu`，只创建「开始菜单」快捷方式：不需要管理员权限，也不会设置开机启动。`-ExecutionPolicy Bypass` 只作用于这一次进程，不会修改系统的执行策略。
+4. 从「开始菜单」打开「蓝色大肥鱼」，并启动本机 [Magpie](https://github.com/yetone/magpie)。
+
+Windows 版没有代码签名。若 SmartScreen 拦截，请先核对下载来源，再选择继续运行；不要关闭系统安全防护。
+
+更新前先从托盘菜单退出桌宠，再运行新版本的 `install.ps1`。卸载时运行已安装目录中的 `install.ps1 -Uninstall`；用户设置会保留。
+
+**macOS（Apple Silicon）**
+
+1. 打开 [Releases](https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest)，下载 `magpie-DaFeiYu-v0.1.2-macOS-arm64.zip`。
 2. 解压后把「蓝色大肥鱼.app」拖进「应用程序」，再从菜单栏打开。
 3. 启动本机 [Magpie](https://github.com/yetone/magpie)，请求灯泡和额度会自动接入。
 
-**要求：Apple Silicon Mac（M 系列），macOS 12+。** 不支持 Intel Mac、Windows 或 Linux。
-
 App 使用本地 ad-hoc 签名，没有 Apple Developer ID 签名或公证。若 macOS 拦截，请先核对下载来源，再到「系统设置 → 隐私与安全性」选择「仍要打开」；不要关闭 Gatekeeper。
+
+**要求：Windows 10+ x64，或 Apple Silicon Mac（M 系列），macOS 12+。** 不支持 Intel Mac 或 Linux 桌面；Linux 仅用于 CI 单元测试。
 
 ### Magpie 页面
 
@@ -57,18 +79,18 @@ App 使用本地 ad-hoc 签名，没有 Apple Developer ID 签名或公证。若
 magpie plugin add github:wolfvoid/magpie-DaFeiYu
 ```
 
-安装后，Magpie 侧边栏会出现「蓝色大肥鱼」使用页。**页面不会自动安装或启动桌面 App**，桌面悬浮窗仍需下载 ZIP。
+安装后，Magpie 侧边栏会出现「蓝色大肥鱼」使用页。**页面不会自动安装或启动桌面 App**，桌面悬浮窗仍需按上面的说明下载对应系统的 ZIP。
 
 ### 从源码
 
-需要 Node.js 24+、npm、Python 3 和 Git：
+需要 Node.js 24+、npm、Python 3 和 Git。npm 命令两个平台一致，只有 Python 命令不同：Windows 用 `python`，macOS/Linux 用 `python3`。
 
 ```bash
 git clone https://github.com/wolfvoid/magpie-DaFeiYu.git
 cd magpie-DaFeiYu
 npm ci --ignore-scripts
 node node_modules/electron/install.js
-python3 scripts/download_assets.py
+python3 scripts/download_assets.py   # Windows 把 python3 换成 python
 node scripts/prepare.mjs
 npm run build
 npm test
@@ -76,6 +98,14 @@ npm start
 ```
 
 动画从上游固定提交下载并逐文件校验，不重复塞进 Git 仓库。首次运行需要联网下载依赖和约 52 MB 素材。
+
+## 一个仓库，两个平台
+
+- 主界面、动画播放、请求灯泡、额度面板与本地 Magpie 读取共用同一份代码，Windows 与 macOS 行为一致。
+- 平台差异被限制在很窄的范围：安装方式（`install.ps1` 或拖入「应用程序」）、应用自身数据目录、托盘图标（Windows 用 PNG、macOS 用 emoji）、打包与签名。
+- Magpie 本地配置沿用官方同一路径 `~/.config/magpie/settings.json`（遵循 `XDG_CONFIG_HOME`），Windows 与 macOS 一致，本应用只读取、不修改。
+- 不维护平台分支或分叉；改动先在共享代码里实现，确属平台差异的才单独处理。
+- 单元测试由 CI 在 Windows、macOS、Linux 三个平台运行；发布产物在 macOS 打包 Apple Silicon，在 Windows 打包 x64。
 
 ## 它能知道什么
 
@@ -86,7 +116,7 @@ npm start
 - 不经过本机 Magpie 的请求不会出现；模型响应结束也不会被误判为任务完成。
 - 未知或过期额度显示 `—%` 或「余额待刷新」，不会凭空推算。
 
-本地接口只连接 `127.0.0.1:3425`（支持自定义端口）：并发状态每 2 秒读取，额度和今日统计每 30 秒刷新。账号归属只在内存中换算为每次启动重新生成的代号。
+本地接口只连接 `127.0.0.1:3425`（支持自定义端口）：并发状态每 2 秒读取，额度和今日统计每 30 秒刷新。Magpie 的配置按官方约定读取 `~/.config/magpie/settings.json`（遵循 `XDG_CONFIG_HOME`），Windows 与 macOS 路径一致。账号归属只在内存中换算为每次启动重新生成的代号。
 
 ## 致谢与许可
 
@@ -105,4 +135,4 @@ npm start
 
 ---
 
-**magpie-DaFeiYu** is a macOS desktop pet for Magpie: 106 animations, live request lights, subscription quotas, API wallet balances, and a local-only privacy model. Apple Silicon, macOS 12+.
+**magpie-DaFeiYu** is a cross-platform desktop pet for Magpie: 106 animations, live request lights, subscription quotas, API wallet balances, and a local-only privacy model. Windows 10+ x64, Apple Silicon macOS 12+.
