@@ -116,22 +116,30 @@ jobs:
         run: |
           test "$RELEASE_TAG" = "v$(node -p 'require("./package.json").version')"
           codesign --verify --deep --strict "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app"
+          test -f "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app/Contents/Resources/app/assets/tray-icon.png"
           ditto -c -k -X --keepParent --zlibCompressionLevel 9 "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app" "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip"
           unzip -tq "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip"
           unzip -Z1 "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip" > dist/mac-entries.txt
-          grep -q '蓝色大肥鱼.app/Contents/Resources/app/assets/tray-icon.png' dist/mac-entries.txt
+          grep -q '/Contents/Resources/app/assets/tray-icon.png$' dist/mac-entries.txt
       - name: Verify Windows archive
         if: matrix.platform == 'win32'
-        shell: pwsh
+        shell: python
         run: |
-          $ErrorActionPreference = 'Stop'
-          $zip = "dist/magpie-DaFeiYu-$env:RELEASE_TAG-Windows-x64.zip"
-          $names = @(tar -tf $zip | ForEach-Object { $_ -replace '^\./','' -replace '\\','/' })
-          if ($LASTEXITCODE -ne 0) { throw "tar -tf failed for $zip" }
-          foreach ($expected in @('install.ps1', '蓝色大肥鱼-win32-x64/BlueDaFeiYu.exe', '蓝色大肥鱼-win32-x64/resources/app/assets/tray-icon.png')) {
-            if ($names -notcontains $expected) { throw "Missing archive entry: $expected" }
-          }
-          Write-Host "Archive OK: $($names.Count) entries, install script verified."
+          import os
+          from zipfile import ZipFile
+          with ZipFile(f"dist/magpie-DaFeiYu-{os.environ['RELEASE_TAG']}-Windows-x64.zip") as archive:
+              invalid = archive.testzip()
+              if invalid:
+                  raise RuntimeError(f"Corrupt archive entry: {invalid}")
+              names = set(archive.namelist())
+              for expected in (
+                  "install.ps1",
+                  "蓝色大肥鱼-win32-x64/BlueDaFeiYu.exe",
+                  "蓝色大肥鱼-win32-x64/resources/app/assets/tray-icon.png",
+              ):
+                  if expected not in names:
+                      raise RuntimeError(f"Missing archive entry: {expected}")
+              print(f"Archive OK: {len(names)} entries, install script verified.")
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}-${{ matrix.arch }}
