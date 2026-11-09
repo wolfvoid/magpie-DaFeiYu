@@ -1,5 +1,5 @@
 import { AnimationDirector } from './animation.mjs';
-import { compactQuotaLabel, quotaEntries } from './quota-display.mjs';
+import { quotaEntries } from './quota-display.mjs';
 import { providerIconSource, providerInitial } from './provider-icons.mjs';
 
 const api = window.pet;
@@ -77,10 +77,6 @@ function renderQuota() {
     value.className = 'account-value';
     value.textContent = account.text;
     badge.append(value);
-    const label = document.createElement('span');
-    label.className = 'account-label';
-    label.textContent = compactQuotaLabel(account);
-    badge.append(label);
     badge.title = `${account.label} · ${account.active ? '正在使用' : '当前未确认有请求使用'} · ${account.available ? '剩余 ' + account.text + (account.kind === 'balance' ? '（Magpie 缓存余额）' : '') : account.kind === 'balance' ? '余额待刷新' : '额度待刷新'}`;
     badge.setAttribute('aria-label', badge.title);
     container.append(badge);
