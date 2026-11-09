@@ -1,11 +1,17 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, screen, shell } = require('electron');
-const { readFileSync, writeFileSync, mkdirSync, renameSync } = require('node:fs');
+const { app, BrowserWindow, dialog, ipcMain, Menu, Tray, nativeImage, screen, shell } = require('electron');
+const { existsSync, readFileSync, writeFileSync, mkdirSync, mkdtempSync, renameSync } = require('node:fs');
 const path = require('node:path');
 const { clampPetPosition } = require('./position.cjs');
 const { mergeCachedQuota } = require('./magpie.cjs');
+const { magpieAppCandidates } = require('./platform.cjs');
 
+const smoke = process.argv.includes('--smoke-test');
 app.setName('蓝色大肥鱼');
-app.setPath('userData', path.join(app.getPath('appData'), 'BlueDaFeiYu-Codex'));
+app.setPath('userData', smoke ? mkdtempSync(path.join(app.getPath('temp'), 'dafeiyu-smoke-')) :
+  path.join(app.getPath('appData'), 'BlueDaFeiYu-Codex'));
+if (process.platform === 'win32') app.setAppUserModelId('local.blue-dafeiyu.codex');
+const appIcon = path.join(__dirname, '../assets/tray-icon.png');
+const qaDirectory = process.env.DAFEIYU_QA_DIR || path.join(app.getPath('userData'), 'qa');
 const catalog = JSON.parse(readFileSync(path.join(__dirname, '../assets/catalog.json'), 'utf8'));
 const defaults = { size: 460, active: true, paused: false, locked: false, followTasks: true,
   showBulbs: true, showQuotas: true, hiddenQuotas: {}, x: null, y: null };
@@ -23,7 +29,6 @@ let dragState;
 let momentum;
 let lastInteractive = false;
 const timers = [];
-const smoke = process.argv.includes('--smoke-test');
 const settingsPath = () => path.join(app.getPath('userData'), 'settings.json');
 const send = (channel, payload) => {
   for (const window of [petWindow, panelWindow]) if (window && !window.isDestroyed()) window.webContents.send(channel, payload);
@@ -79,7 +84,8 @@ function showPet() {
 function showPanel() {
   if (panelWindow && !panelWindow.isDestroyed()) { panelWindow.show(); panelWindow.focus(); return; }
   panelWindow = new BrowserWindow({ width: 460, height: 680, minWidth: 400, minHeight: 540,
-    title: '蓝色大肥鱼 · 陪伴面板', backgroundColor: '#f5f8ff', show: false,
+    title: '蓝色大肥鱼 · 陪伴面板', backgroundColor: '#f5f8ff', show: false, icon: appIcon,
+    autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
   guardWindow(panelWindow);
   panelWindow.loadFile(path.join(__dirname, 'panel.html'));
@@ -147,9 +153,11 @@ function menuItems() {
 function updateTray() { tray?.setContextMenu(Menu.buildFromTemplate(menuItems())); }
 
 async function openMagpie() {
-  const { existsSync } = require('node:fs');
-  const target = ['/Applications/magpie.app', path.join(app.getPath('home'), 'Applications/magpie.app')].find(existsSync);
-  if (target) await shell.openPath(target);
+  const target = magpieAppCandidates().find(existsSync);
+  const error = target ? await shell.openPath(target) : '未在默认安装目录找到 Magpie，请从开始菜单或应用程序手动打开。';
+  if (error) await dialog.showMessageBox({
+    type: 'info', title: '打开 Magpie', message: '请手动启动 Magpie', detail: error,
+  });
 }
 
 async function refreshQuota(force = false) {
@@ -203,6 +211,7 @@ else {
   app.on('second-instance', () => { if (petWindow) showPet(); });
   app.whenReady().then(async () => {
     if (process.platform === 'darwin') app.dock?.hide();
+    if (process.platform === 'win32') Menu.setApplicationMenu(null);
     try {
       const saved = JSON.parse(readFileSync(settingsPath(), 'utf8'));
       for (const key of ['active', 'paused', 'locked', 'followTasks', 'showBulbs', 'showQuotas']) if (typeof saved[key] === 'boolean') settings[key] = saved[key];
@@ -223,13 +232,15 @@ else {
       webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: true } });
     guardWindow(petWindow);
     petWindow.setAlwaysOnTop(true, 'floating');
-    petWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
+    if (process.platform === 'darwin') petWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
     petWindow.setIgnoreMouseEvents(true, { forward: true });
     petWindow.loadFile(path.join(__dirname, 'pet.html'));
     petWindow.once('ready-to-show', showPet);
     petWindow.on('closed', () => app.quit());
-    tray = new Tray(nativeImage.createEmpty());
-    tray.setTitle('🐋');
+    tray = new Tray(process.platform === 'darwin' ? nativeImage.createEmpty() :
+      nativeImage.createFromPath(appIcon).resize({ width: 32, height: 32 }));
+    if (process.platform === 'darwin') tray.setTitle('🐋');
+    else tray.on('click', showPanel);
     tray.setToolTip('蓝色大肥鱼 · Magpie 伴侣');
     updateTray();
     const trusted = event => [petWindow, panelWindow].some(window => window && !window.isDestroyed() && event.sender === window.webContents);
@@ -332,8 +343,8 @@ else {
           accountBadges.push({ expectedActive: count, badges: await petWindow.webContents.executeJavaScript(
             '[...document.querySelectorAll(".account-quota")].map(badge => ({ text: badge.textContent, active: badge.classList.contains("active"), color: getComputedStyle(badge).color }))') });
           if (count === 1) {
-            mkdirSync(path.join(app.getAppPath(), 'qa'), { recursive: true });
-            writeFileSync(path.join(app.getAppPath(), 'qa/account-colors.png'), (await petWindow.webContents.capturePage()).toPNG());
+            mkdirSync(qaDirectory, { recursive: true });
+            writeFileSync(path.join(qaDirectory, 'account-colors.png'), (await petWindow.webContents.capturePage()).toPNG());
           }
         }
         const accountLayout = await petWindow.webContents.executeJavaScript(`(() => {
@@ -359,19 +370,19 @@ else {
         const edge = { requested, actual: petWindow.getBounds(), workArea };
         petWindow.setBounds(originalBounds);
         const ui = await petWindow.webContents.executeJavaScript('({ filter: getComputedStyle(document.querySelector("video")).filter, status: document.querySelector("#request-lights").getAttribute("aria-label") })');
-        mkdirSync(path.join(app.getAppPath(), 'qa'), { recursive: true });
-        writeFileSync(path.join(app.getAppPath(), 'qa/smoke.json'), JSON.stringify({ report, activity, quota, edge, ui, controls, bulbs, accountBadges, accountLayout }, null, 2));
+        mkdirSync(qaDirectory, { recursive: true });
+        writeFileSync(path.join(qaDirectory, 'smoke.json'), JSON.stringify({ report, activity, quota, edge, ui, controls, bulbs, accountBadges, accountLayout }, null, 2));
         const image = await petWindow.webContents.capturePage();
-        writeFileSync(path.join(app.getAppPath(), 'qa/pet.png'), image.toPNG());
+        writeFileSync(path.join(qaDirectory, 'pet.png'), image.toPNG());
         if (panelWindow) {
           await panelWindow.webContents.executeJavaScript('window.scrollTo(0, 0)');
           await new Promise(resolve => setTimeout(resolve, 100));
-          writeFileSync(path.join(app.getAppPath(), 'qa/panel.png'), (await panelWindow.webContents.capturePage()).toPNG());
+          writeFileSync(path.join(qaDirectory, 'panel.png'), (await panelWindow.webContents.capturePage()).toPNG());
         }
         app.quit();
       }, 27000);
     }
-  }).catch(error => { console.error(error); app.quit(); });
+  }).catch(error => { console.error(error); app.exit(1); });
 }
 
 app.on('window-all-closed', () => {});

@@ -1,41 +1,215 @@
-name: Mac release
+name: Release
 
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    tags: ['v0.1.*']
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  release:
-    runs-on: macos-14
-    permissions:
-      contents: write
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.plan.outputs.release_tag }}
+      should_release: ${{ steps.plan.outputs.should_release }}
+      mode: ${{ steps.plan.outputs.mode }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Plan release
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p 'require("./package.json").version')"
+          TAG="v$VERSION"
+          echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
+          if ! printf '%s' "$VERSION" | grep -Eq '^0\.1\.[0-9]+$'; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "Version $VERSION is not a 0.1.x release; nothing to do."
+            exit 1
+          fi
+          if [ "$EVENT" = 'push' ] && [ "$REF_TYPE" = 'tag' ]; then
+            if [ "$REF_NAME" != "$TAG" ]; then
+              echo "should_release=false" >> "$GITHUB_OUTPUT"
+              echo "Tag $REF_NAME does not match package.json version $VERSION."
+              exit 1
+            fi
+            if gh api "repos/$REPOSITORY/releases/tags/$TAG" >/dev/null 2>&1; then
+              echo "should_release=false" >> "$GITHUB_OUTPUT"
+              echo "Release $TAG already exists; nothing to do."
+              exit 0
+            fi
+            MODE="verify-tag"
+          else
+            if [ "$REF_NAME" != 'main' ]; then
+              echo "should_release=false" >> "$GITHUB_OUTPUT"
+              echo "Push to $REF_NAME does not trigger releases; only main does."
+              exit 0
+            fi
+            if gh api "repos/$REPOSITORY/git/ref/tags/$TAG" >/dev/null 2>&1; then
+              echo "should_release=false" >> "$GITHUB_OUTPUT"
+              echo "Tag $TAG already exists; nothing to do."
+              exit 0
+            fi
+            if gh api "repos/$REPOSITORY/releases/tags/$TAG" >/dev/null 2>&1; then
+              echo "should_release=false" >> "$GITHUB_OUTPUT"
+              echo "Release $TAG already exists; nothing to do."
+              exit 0
+            fi
+            MODE="create-at-sha"
+          fi
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "should_release=true" >> "$GITHUB_OUTPUT"
+          echo "Planned $TAG release ($MODE)."
+
+  build:
+    name: package (${{ matrix.platform }}/${{ matrix.arch }})
+    needs: preflight
+    if: needs.preflight.outputs.should_release == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            platform: darwin
+            arch: arm64
+          - os: windows-latest
+            platform: win32
+            arch: x64
+    runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_TAG: ${{ needs.preflight.outputs.release_tag }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
       - run: npm ci --ignore-scripts
-      - run: python3 scripts/download_assets.py
-      - run: node scripts/prepare.mjs
-      - run: npm run build && npm test
-      - run: npm run package
-      - name: Verify and archive
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
+      - name: Download animation assets (macOS)
+        if: matrix.platform == 'darwin'
+        run: python3 scripts/download_assets.py
+      - name: Download animation assets (Windows)
+        if: matrix.platform == 'win32'
+        run: python scripts/download_assets.py
+      - run: npm run build
+      - run: npm test
+      - run: npm run check
+      - run: node scripts/package.mjs --platform ${{ matrix.platform }} --arch ${{ matrix.arch }}
+      - name: Verify and archive macOS app
+        if: matrix.platform == 'darwin'
         run: |
           test "$RELEASE_TAG" = "v$(node -p 'require("./package.json").version')"
           codesign --verify --deep --strict "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app"
+          test -f "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app/Contents/Resources/app/assets/tray-icon.png"
           ditto -c -k -X --keepParent --zlibCompressionLevel 9 "dist/蓝色大肥鱼-darwin-arm64/蓝色大肥鱼.app" "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip"
-          cd dist
-          shasum -a 256 "magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip" > SHA256SUMS.txt
-          unzip -tq "magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip"
+          python3 - "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip" <<'PY'
+          import sys
+          from pathlib import Path
+          from zipfile import ZipFile
+          with ZipFile(sys.argv[1]) as archive:
+              invalid = archive.testzip()
+              if invalid:
+                  raise RuntimeError(f"Corrupt archive entry: {invalid!a}")
+              icons = [name for name in archive.namelist()
+                       if name.endswith(".app/Contents/Resources/app/assets/tray-icon.png")]
+              if len(icons) != 1:
+                  raise RuntimeError(f"Expected one tray icon, found {icons!a}")
+              if archive.read(icons[0]) != Path("assets/tray-icon.png").read_bytes():
+                  raise RuntimeError("Archived tray icon differs from the source.")
+              print(f"macOS archive verified: {len(archive.namelist())} entries.")
+          PY
+      - name: Verify Windows archive
+        if: matrix.platform == 'win32'
+        shell: python
+        run: |
+          import os
+          from zipfile import ZipFile
+          with ZipFile(f"dist/magpie-DaFeiYu-{os.environ['RELEASE_TAG']}-Windows-x64.zip") as archive:
+              invalid = archive.testzip()
+              if invalid:
+                  raise RuntimeError(f"Corrupt archive entry: {invalid}")
+              names = set(archive.namelist())
+              for expected in (
+                  "install.ps1",
+                  "蓝色大肥鱼-win32-x64/BlueDaFeiYu.exe",
+                  "蓝色大肥鱼-win32-x64/resources/app/assets/tray-icon.png",
+              ):
+                  if expected not in names:
+                      raise RuntimeError(f"Missing archive entry: {expected}")
+              print(f"Archive OK: {len(names)} entries, install script verified.")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-${{ matrix.arch }}
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: publish GitHub release
+    needs: [preflight, build]
+    if: needs.preflight.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ needs.preflight.outputs.release_tag }}
+      MODE: ${{ needs.preflight.outputs.mode }}
+      SHA: ${{ github.sha }}
+      MAC_ZIP: magpie-DaFeiYu-${{ needs.preflight.outputs.release_tag }}-macOS-arm64.zip
+      WIN_ZIP: magpie-DaFeiYu-${{ needs.preflight.outputs.release_tag }}-Windows-x64.zip
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Verify and checksum both archives
+        run: |
+          set -euo pipefail
+          test -f "dist/$MAC_ZIP"
+          test -f "dist/$WIN_ZIP"
+          python3 - "dist/$MAC_ZIP" "dist/$WIN_ZIP" <<'PY'
+          import sys
+          from zipfile import ZipFile
+          for path in sys.argv[1:]:
+              with ZipFile(path) as archive:
+                  invalid = archive.testzip()
+                  if invalid:
+                      raise RuntimeError(f"Corrupt archive entry: {invalid!a}")
+                  if path.endswith("-Windows-x64.zip") and "install.ps1" not in archive.namelist():
+                      raise RuntimeError("Windows installer is missing.")
+                  print(f"Verified {path}")
+          PY
+          (cd dist && sha256sum "$MAC_ZIP" "$WIN_ZIP" > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG · 蓝色大肥鱼 Mac × Magpie" --notes-file "docs/releases/${RELEASE_TAG}.md" "dist/magpie-DaFeiYu-${RELEASE_TAG}-macOS-arm64.zip" dist/SHA256SUMS.txt
+          set -euo pipefail
+          args=(release create "$RELEASE_TAG")
+          if [ "$MODE" = 'verify-tag' ]; then
+            args+=(--verify-tag)
+          else
+            args+=(--target "$SHA")
+          fi
+          gh "${args[@]}" --latest \
+            --title "$RELEASE_TAG · 蓝色大肥鱼 macOS × Windows · Magpie" \
+            --notes-file "docs/releases/${RELEASE_TAG}.md" \
+            "dist/$MAC_ZIP" "dist/$WIN_ZIP" dist/SHA256SUMS.txt
