@@ -2,17 +2,20 @@ const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, screen, shell } = 
 const { readFileSync, writeFileSync, mkdirSync, renameSync } = require('node:fs');
 const path = require('node:path');
 const { clampPetPosition } = require('./position.cjs');
+const { mergeCachedQuota } = require('./magpie.cjs');
 
 app.setName('蓝色大肥鱼');
 app.setPath('userData', path.join(app.getPath('appData'), 'BlueDaFeiYu-Codex'));
 const catalog = JSON.parse(readFileSync(path.join(__dirname, '../assets/catalog.json'), 'utf8'));
-const defaults = { size: 460, active: true, paused: false, locked: false, followTasks: true, x: null, y: null };
+const defaults = { size: 460, active: true, paused: false, locked: false, followTasks: true,
+  showBulbs: true, showQuotas: true, hiddenQuotas: {}, x: null, y: null };
 let settings = { ...defaults };
 let petWindow;
 let panelWindow;
 let tray;
 let reader;
 let quota = { ok: false, windows: [], error: '正在连接 Magpie…', observedAt: null };
+let cachedQuota = null;
 let activity = { state: 'unknown', label: '正在读取任务状态', available: false, activeCount: 0 };
 let quotaQuery;
 let lastQuotaAttempt = 0;
@@ -68,6 +71,7 @@ function guardWindow(window) {
 
 function showPet() {
   petWindow.showInactive();
+  app.dock?.hide();
   send('settings', settings);
   updateTray();
 }
@@ -90,8 +94,13 @@ function play(name) {
 }
 
 function changeSetting(key, value) {
-  if (['active', 'paused', 'locked', 'followTasks'].includes(key) && typeof value === 'boolean') settings[key] = value;
+  if (['active', 'paused', 'locked', 'followTasks', 'showBulbs', 'showQuotas'].includes(key) && typeof value === 'boolean') settings[key] = value;
   else if (key === 'size' && [360, 460, 560].includes(value)) settings.size = value;
+  else if (key === 'hiddenQuotas' && value && typeof value === 'object' && !Array.isArray(value)) {
+    settings.hiddenQuotas = Object.fromEntries(Object.entries(value)
+      .filter(([id, hidden]) => typeof id === 'string' && id.length <= 240 && hidden === true)
+      .slice(0, 500));
+  }
   else return;
   momentum = null;
   dragState = null;
@@ -116,6 +125,9 @@ function menuItems() {
     { label: '额度与设置…', click: showPanel },
     { label: '打开 Magpie', click: openMagpie },
     { label: '跟随 Magpie 请求', type: 'checkbox', checked: settings.followTasks, click: item => changeSetting('followTasks', item.checked) },
+    { label: '显示请求灯泡', type: 'checkbox', checked: settings.showBulbs, click: item => changeSetting('showBulbs', item.checked) },
+    { label: '显示账号额度', type: 'checkbox', checked: settings.showQuotas, click: item => changeSetting('showQuotas', item.checked) },
+    { label: '恢复全部额度显示', click: () => changeSetting('hiddenQuotas', {}) },
     { label: '随机玩耍', type: 'checkbox', checked: settings.active, click: item => changeSetting('active', item.checked) },
     { label: '暂停动画', type: 'checkbox', checked: settings.paused, click: item => changeSetting('paused', item.checked) },
     { label: '锁定位置', type: 'checkbox', checked: settings.locked, click: item => changeSetting('locked', item.checked) },
@@ -123,7 +135,7 @@ function menuItems() {
     { label: '大小', submenu: [[360, '小'], [460, '中'], [560, '大']].map(([size, label]) => ({ label, type: 'radio',
       checked: settings.size === size, click: () => changeSetting('size', size) })) },
     { label: petWindow?.isVisible() ? '隐藏桌宠' : '显示桌宠', click: () => {
-      if (petWindow.isVisible()) { petWindow.hide(); petWindow.webContents.send('settings', { ...settings, paused: true }); }
+      if (petWindow.isVisible()) { petWindow.hide(); app.dock?.show(); petWindow.webContents.send('settings', { ...settings, paused: true }); }
       else showPet();
       updateTray();
     } },
@@ -146,7 +158,8 @@ async function refreshQuota(force = false) {
   lastQuotaAttempt = Date.now();
   const { readQuota } = await import('./magpie.mjs');
   quotaQuery = readQuota().then(result => {
-    quota = result;
+    quota = result.ok ? result : mergeCachedQuota(cachedQuota, result);
+    if (quota.ok) cachedQuota = quota;
     send('quota', quota);
     return quota;
   }).finally(() => { quotaQuery = null; });
@@ -192,7 +205,12 @@ else {
     if (process.platform === 'darwin') app.dock?.hide();
     try {
       const saved = JSON.parse(readFileSync(settingsPath(), 'utf8'));
-      for (const key of ['active', 'paused', 'locked', 'followTasks']) if (typeof saved[key] === 'boolean') settings[key] = saved[key];
+      for (const key of ['active', 'paused', 'locked', 'followTasks', 'showBulbs', 'showQuotas']) if (typeof saved[key] === 'boolean') settings[key] = saved[key];
+      if (saved.hiddenQuotas && typeof saved.hiddenQuotas === 'object' && !Array.isArray(saved.hiddenQuotas)) {
+        settings.hiddenQuotas = Object.fromEntries(Object.entries(saved.hiddenQuotas)
+          .filter(([id, hidden]) => typeof id === 'string' && id.length <= 240 && hidden === true)
+          .slice(0, 500));
+      }
       if ([360, 460, 560].includes(saved.size)) settings.size = saved.size;
       if (Number.isFinite(saved.x) && Number.isFinite(saved.y)) { settings.x = saved.x; settings.y = saved.y; }
     } catch {}

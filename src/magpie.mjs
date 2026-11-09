@@ -17,7 +17,7 @@ export function resolvePort() {
 export async function readLocal(route, { port = resolvePort(), fetcher = fetch, timeoutMs = 5000, maxBytes = 2000000 } = {}) {
   const response = await fetcher(`http://127.0.0.1:${port}${route}`, {
     method: 'GET', redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
-    headers: { 'User-Agent': 'Magpie-DaFeiYu/0.1.1' },
+    headers: { 'User-Agent': 'Magpie-DaFeiYu/0.1.3' },
   });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const reader = response.body.getReader();
@@ -93,21 +93,30 @@ export function normalizeCards(data, now = Date.now()) {
   for (const [index, card] of (Array.isArray(data?.data) ? data.data : []).entries()) {
     if (!card || typeof card !== 'object') continue;
     const accountId = accountKey(card.provider || '', card.user || `unknown-${index}`);
+    const name = card.name || '订阅';
+    const plan = card.plan || '账户';
+    const provider = typeof card.provider === 'string' ? card.provider : '';
+    const icon = typeof card.icon === 'string' ? card.icon : '';
+    const stableKey = [provider, name, plan, index + 1].join('|');
     const kind = card.kind === 'balance' ? 'balance' : 'subscription';
     const balance = typeof card.balance === 'string' &&
       /^(?:[¥￥$€£]\s*-?\d+(?:,\d{3})*(?:\.\d+)?|(?:CNY|USD|EUR|GBP)\s*-?\d+(?:\.\d+)?|-?\d+(?:\.\d+)?\s*(?:CNY|USD|EUR|GBP))$/.test(card.balance.trim())
       ? card.balance.trim() : null;
     const readAt = Date.parse(card.readAt);
-    accounts.push({ accountId, label: `${card.name || '订阅'} · ${card.plan || '账户'} #${index + 1}`,
-      kind, ...(kind === 'balance' ? { balance, readAt: Number.isFinite(readAt) ? readAt : null } : {}) });
+    accounts.push({ accountId, key: `${stableKey}|balance`, provider, icon, name, plan,
+      label: `${name} · ${plan} #${index + 1}`, kind,
+      ...(kind === 'balance' ? { balance, readAt: Number.isFinite(readAt) ? readAt : null } : {}) });
     if (kind === 'balance') continue;
-    for (const window of Array.isArray(card.windows) ? card.windows : []) {
+    for (const [windowIndex, window] of (Array.isArray(card.windows) ? card.windows : []).entries()) {
       if (!window || typeof window !== 'object') continue;
       if (typeof window.used !== 'number' || !Number.isFinite(window.used)) continue;
       const used = Math.max(0, Math.min(100, window.used));
       const readAt = Date.parse(card.readAt);
       const reset = Date.parse(window.resetsAt);
-      windows.push({ accountId, label: `${card.name || '订阅'} · ${card.plan || '账户'} #${index + 1} · ${window.name || '额度'}`,
+      const windowName = window.name || '额度';
+      windows.push({ accountId, key: `${stableKey}|window|${windowIndex}|${windowName}`,
+        provider, icon, name, plan, windowName,
+        label: `${name} · ${plan} #${index + 1} · ${windowName}`,
         used, remaining: 100 - used, resetsAt: Number.isFinite(reset) ? reset / 1000 : null,
         readAt: Number.isFinite(readAt) ? readAt : null,
         stale: !Number.isFinite(readAt) || now - readAt > 600000 });

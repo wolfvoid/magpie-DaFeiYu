@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ActivityReader, chooseActivity, normalizeCards, readQuota, readLocal, activeAccountsForRoute } from '../src/magpie.mjs';
-import { accountPercentages } from '../src/quota-display.mjs';
+import { accountPercentages, compactQuotaLabel, quotaEntries } from '../src/quota-display.mjs';
 import { clampPetPosition } from '../src/position.cjs';
 import { AnimationDirector } from '../src/animation.mjs';
+import { mergeCachedQuota } from '../src/magpie.cjs';
 
 const now = 1800000000000;
 const catalog = JSON.parse(readFileSync(new URL('../assets/catalog.json', import.meta.url)));
@@ -111,6 +112,59 @@ test('offline clears state; usage failure does not hide valid quota', async () =
   } });
   assert.equal(partial.ok, true);
   assert.equal(partial.usage, undefined);
+});
+
+test('quota failures preserve the last usable account values', () => {
+  const previous = { ok: true, accounts: [
+    { accountId: 'first', kind: 'subscription' },
+    { accountId: 'second', kind: 'balance', balance: '¥12.34', readAt: now },
+  ], windows: [{ accountId: 'first', remaining: 72, readAt: now, resetsAt: now / 1000 + 60 }], observedAt: now };
+  const fallback = { ok: false, accounts: [], windows: [], observedAt: now + 31000, error: 'offline' };
+  const cached = mergeCachedQuota(previous, fallback);
+  assert.deepEqual(accountPercentages(cached, { available: true, observedAt: now + 31000 }, now + 31000)
+    .map(badge => [badge.text, badge.available]), [['72%', true], ['¥12.34', true]]);
+  assert.equal(cached.error, 'offline');
+  assert.equal(cached.observedAt, fallback.observedAt);
+  assert.equal(mergeCachedQuota(null, fallback), fallback);
+});
+
+test('each quota window has an independent display key, icon metadata and cached value', () => {
+  const quota = normalizeCards({ data: [
+    { provider: 'cursor', name: 'Cursor', icon: 'cursor', plan: 'Team', readAt: new Date(now).toISOString(),
+      windows: [
+        { name: 'Models', used: 25, resetsAt: new Date(now + 3600000).toISOString() },
+        { name: 'Other', used: 60, resetsAt: new Date(now + 3600000).toISOString() },
+      ] },
+    { provider: 'deepseek', name: 'DeepSeek', icon: 'deepseek-color', kind: 'balance',
+      balance: '¥12.34', readAt: new Date(now).toISOString(), windows: [] },
+  ] }, now);
+  const entries = quotaEntries(quota, null, now);
+  assert.equal(entries.length, 3);
+  assert.equal(new Set(entries.map(entry => entry.key)).size, 3);
+  assert.deepEqual(entries.map(entry => entry.text), ['75%', '40%', '¥12.34']);
+  assert.deepEqual(entries.map(entry => entry.icon), ['cursor', 'cursor', 'deepseek-color']);
+  assert.ok(entries[0].key.includes('Cursor|Team|1|window|0|Models'));
+
+  const cached = mergeCachedQuota(quota, { ok: false, accounts: [], windows: [],
+    observedAt: now + 700000, error: 'offline' });
+  assert.deepEqual(quotaEntries(cached, null, now + 700000).map(entry => entry.text), ['75%', '40%', '¥12.34']);
+});
+
+test('expired reset windows stop showing a cached percentage', () => {
+  const quota = normalizeCards({ data: [{
+    provider: 'cursor', name: 'Cursor', plan: 'Team', readAt: new Date(now).toISOString(),
+    windows: [{ name: 'Models', used: 25, resetsAt: new Date(now + 60000).toISOString() }],
+  }] }, now);
+  const cached = mergeCachedQuota(quota, { ok: false, accounts: [], windows: [], observedAt: now + 700000 });
+  assert.equal(quotaEntries(cached, null, now + 700000)[0].text, '—%');
+});
+
+test('desktop badges use short recognizable quota labels', () => {
+  assert.equal(compactQuotaLabel({ kind: 'subscription', windowName: 'Cursor Models' }), '模型');
+  assert.equal(compactQuotaLabel({ kind: 'subscription', windowName: 'Other Models' }), '其他');
+  assert.equal(compactQuotaLabel({ kind: 'subscription', windowName: '7 days' }), '7天');
+  assert.equal(compactQuotaLabel({ kind: 'subscription', windowName: 'Weekly' }), '本周');
+  assert.equal(compactQuotaLabel({ kind: 'balance' }), '余额');
 });
 
 test('HTTP errors, malformed JSON, timeout and oversized responses reject', async () => {

@@ -20,7 +20,7 @@ try {
     recursive: true, filter: source => !source.endsWith('/vendor'),
   });
   mkdirSync(join(staging, 'assets'));
-  for (const name of ['catalog.json', 'upstream.json', 'webm']) {
+  for (const name of ['catalog.json', 'upstream.json', 'provider-icons', 'webm']) {
     cpSync(join(root, 'assets', name), join(staging, 'assets', name), { recursive: true, dereference: true });
   }
   for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'licenses']) {

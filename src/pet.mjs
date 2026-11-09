@@ -1,5 +1,6 @@
 import { AnimationDirector } from './animation.mjs';
-import { accountPercentages } from './quota-display.mjs';
+import { compactQuotaLabel, quotaEntries } from './quota-display.mjs';
+import { providerIconSource, providerInitial } from './provider-icons.mjs';
 
 const api = window.pet;
 const videos = [...document.querySelectorAll('video')];
@@ -23,6 +24,7 @@ let failureCount = 0;
 window.petDiagnostics = { loaded: false, errors: [], played: [], transparent: false };
 
 function describe() {
+  lights.dataset.visible = String(settings?.showBulbs !== false);
   renderQuota();
   const requests = activity.available && Number.isInteger(activity.activeCount) ? Math.max(0, activity.activeCount) : 0;
   const description = activity.available ? requests ? `Magpie：${requests} 个进行中的请求（含排队）` : activity.label : 'Magpie 未连接，状态未知';
@@ -49,15 +51,37 @@ function describe() {
 
 function renderQuota() {
   const container = document.querySelector('#account-quotas');
+  if (settings?.showQuotas === false) { container.hidden = true; return; }
+  container.hidden = false;
   const scrollOffset = container.scrollLeft;
   container.replaceChildren();
-  for (const account of accountPercentages(quota, activity)) {
+  for (const account of quotaEntries(quota, activity).filter(account => settings.hiddenQuotas?.[account.key] !== true)) {
     const badge = document.createElement('span');
     badge.className = 'account-quota';
     badge.classList.toggle('active', account.active);
     badge.classList.toggle('unavailable', !account.available);
-    badge.textContent = account.text;
-    badge.title = `${account.label} · ${account.active ? '正在使用' : '当前未确认有请求使用'} · ${account.available ? '剩余 ' + account.text + (account.kind === 'balance' ? '（Magpie 缓存余额）' : '（取最低额度窗口）') : account.kind === 'balance' ? '余额待刷新' : '额度待刷新'}`;
+    const source = providerIconSource(account.icon);
+    if (source) {
+      const logo = document.createElement('img');
+      logo.className = 'account-logo';
+      logo.src = source;
+      logo.alt = '';
+      badge.append(logo);
+    } else {
+      const logo = document.createElement('span');
+      logo.className = 'account-logo fallback';
+      logo.textContent = providerInitial(account);
+      badge.append(logo);
+    }
+    const value = document.createElement('span');
+    value.className = 'account-value';
+    value.textContent = account.text;
+    badge.append(value);
+    const label = document.createElement('span');
+    label.className = 'account-label';
+    label.textContent = compactQuotaLabel(account);
+    badge.append(label);
+    badge.title = `${account.label} · ${account.active ? '正在使用' : '当前未确认有请求使用'} · ${account.available ? '剩余 ' + account.text + (account.kind === 'balance' ? '（Magpie 缓存余额）' : '') : account.kind === 'balance' ? '余额待刷新' : '额度待刷新'}`;
     badge.setAttribute('aria-label', badge.title);
     container.append(badge);
   }
@@ -184,14 +208,6 @@ document.addEventListener('contextmenu', event => { event.preventDefault(); api.
 document.querySelector('#next-action').onclick = () => play(director.select(director.program(), true, true));
 document.querySelector('#pause').onclick = () => api.setting('paused', !settings.paused);
 document.querySelector('#menu').onclick = () => api.menu();
-document.querySelector('#account-quotas').addEventListener('wheel', event => {
-  const container = event.currentTarget;
-  if (container.scrollWidth > container.clientWidth && Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-    container.scrollLeft += event.deltaY;
-    event.preventDefault();
-  }
-}, { passive: false });
-
 const initial = await api.getSnapshot();
 settings = initial.settings;
 activity = initial.activity;
