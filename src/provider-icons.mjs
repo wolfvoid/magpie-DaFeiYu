@@ -1,5 +1,4 @@
-const BUNDLED = new Set(['cursor', 'deepseek-color', 'codex-color', 'volcengine-color',
-  'claude-color', 'gemini-color', 'qwen-color', 'openai', 'grok', 'zhipu-color']);
+const BUNDLED = new Set(['cursor', 'deepseek-color', 'codex-color', 'volcengine-color']);
 
 export function providerIconSource(icon) {
   return BUNDLED.has(icon)
