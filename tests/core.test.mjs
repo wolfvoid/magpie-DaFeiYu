@@ -24,7 +24,7 @@ test('API balances retain currency and coexist with subscription percentages', (
   const badges = accountPercentages(quota, activity, now);
   assert.deepEqual(badges.map(badge => badge.text), ['75%', '¥12.34', '$0.00']);
   assert.equal(badges[1].active, true);
-  assert.equal(accountPercentages(quota, activity, now + 600001)[1].text, '余额待刷新');
+  assert.equal(accountPercentages(quota, activity, now + 3600000)[1].text, '¥12.34');
 });
 
 test('balance-only accounts work and invalid or undated balances never become percentages', () => {
@@ -336,6 +336,6 @@ test('one percentage per account uses minimum window and red requires fresh acti
   assert.deepEqual(badges.map(badge => badge.active), [false, true]);
   assert.equal(accountPercentages(quota, activity, now + 11000)[1].active, false);
   assert.equal(accountPercentages(quota, activity, now + 31000)[0].text, '—%');
-  assert.ok(accountPercentages(quota, activity, now + 610000).every(badge => badge.text === '—%'));
+  assert.deepEqual(accountPercentages(quota, activity, now + 610000).map(badge => badge.text), ['—%', '12%']);
   assert.ok(accountPercentages(quota, { ...activity, available: false }, now).every(badge => !badge.active));
 });

@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('pet', {
   drag: phase => ipcRenderer.send('drag', phase),
   interactive: value => ipcRenderer.send('interactive', value),
   openMagpie: () => ipcRenderer.send('open-magpie'),
+  openRepository: () => ipcRenderer.send('open-repository'),
+  resize: height => ipcRenderer.send('resize', height),
   on: (channel, callback) => {
     if (!['snapshot', 'activity', 'quota', 'play', 'cursor', 'settings'].includes(channel)) return;
     ipcRenderer.on(channel, (_event, value) => callback(value));

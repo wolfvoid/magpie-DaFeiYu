@@ -204,6 +204,8 @@ document.addEventListener('contextmenu', event => { event.preventDefault(); api.
 document.querySelector('#next-action').onclick = () => play(director.select(director.program(), true, true));
 document.querySelector('#pause').onclick = () => api.setting('paused', !settings.paused);
 document.querySelector('#menu').onclick = () => api.menu();
+const dock = document.querySelector('#dock');
+new ResizeObserver(() => api.resize(dock.offsetTop + dock.offsetHeight + 8)).observe(dock);
 const initial = await api.getSnapshot();
 settings = initial.settings;
 activity = initial.activity;

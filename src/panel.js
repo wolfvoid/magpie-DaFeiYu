@@ -85,10 +85,10 @@ function renderQuota(quota) {
       reset.textContent = entry.resetsAt ? `重置：${new Date(entry.resetsAt * 1000).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}（北京时间）` : '重置时间暂不可用';
       reset.textContent += entry.readAt ? ` · 数据 ${new Date(entry.readAt).toLocaleTimeString('zh-CN')}${entry.cached ? ' · 本地缓存' : ''}` : ' · 数据时间未知';
       row.append(meter, reset);
-    } else if (entry.cached) {
+    } else if (entry.readAt || entry.cached) {
       const note = document.createElement('div');
       note.className = 'reset';
-      note.textContent = '本地缓存余额';
+      note.textContent = `${entry.readAt ? `数据 ${new Date(entry.readAt).toLocaleTimeString('zh-CN')}` : '数据时间未知'}${entry.cached ? ' · 本地缓存' : ''}`;
       row.append(note);
     }
     container.append(row);
@@ -125,6 +125,7 @@ document.querySelector('#refresh').onclick = async () => {
   finally { button.disabled = false; button.textContent = '刷新'; }
 };
 document.querySelector('#open-magpie').onclick = () => api.openMagpie();
+document.querySelector('#repository').onclick = event => { event.preventDefault(); api.openRepository(); };
 document.querySelector('#search').oninput = filterActions;
 document.querySelector('#size').onchange = event => api.setting('size', Number(event.target.value));
 for (const input of document.querySelectorAll('[data-setting]')) input.onchange = () => api.setting(input.dataset.setting, input.checked);

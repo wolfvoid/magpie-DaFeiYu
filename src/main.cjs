@@ -28,6 +28,7 @@ let lastQuotaAttempt = 0;
 let dragState;
 let momentum;
 let lastInteractive = false;
+let contentHeight = null;
 const timers = [];
 const settingsPath = () => path.join(app.getPath('userData'), 'settings.json');
 const send = (channel, payload) => {
@@ -43,7 +44,8 @@ function saveSettings() {
 }
 
 function windowSize() {
-  return { width: settings.size, height: Math.round(settings.size * 9 / 16) + 112 };
+  const base = Math.round(settings.size * 9 / 16) + 112;
+  return { width: settings.size, height: Number.isInteger(contentHeight) ? Math.min(Math.max(contentHeight, base - 40), base + 200) : base };
 }
 
 function clampPosition(position, display) {
@@ -248,6 +250,15 @@ else {
     ipcMain.on('play', (event, name) => { if (trusted(event)) play(name); });
     ipcMain.on('setting', (event, key, value) => { if (trusted(event)) changeSetting(key, value); });
     ipcMain.on('open-magpie', event => { if (trusted(event)) openMagpie(); });
+    ipcMain.on('open-repository', event => { if (trusted(event)) shell.openExternal('https://github.com/wolfvoid/magpie-DaFeiYu'); });
+    ipcMain.on('resize', (event, height) => {
+      if (event.sender !== petWindow.webContents || !Number.isFinite(height) || dragState) return;
+      const next = Math.round(height);
+      if (next === contentHeight) return;
+      contentHeight = next;
+      const bounds = petWindow.getBounds();
+      petWindow.setBounds({ ...clampPosition({ x: bounds.x, y: bounds.y }), ...windowSize() });
+    });
     ipcMain.on('interactive', (event, value) => {
       if (event.sender !== petWindow.webContents || typeof value !== 'boolean' || dragState || value === lastInteractive) return;
       lastInteractive = value;
