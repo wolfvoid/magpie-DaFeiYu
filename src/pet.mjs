@@ -75,7 +75,7 @@ function renderQuota() {
     }
     const value = document.createElement('span');
     value.className = 'account-value';
-    value.textContent = account.text;
+    value.textContent = account.kind === 'balance' && !account.available ? '?' : account.text;
     badge.append(value);
     badge.title = `${account.label} · ${account.active ? '正在使用' : '当前未确认有请求使用'} · ${account.available ? '剩余 ' + account.text + (account.kind === 'balance' ? '（Magpie 缓存余额）' : '') : account.kind === 'balance' ? '余额待刷新' : '额度待刷新'}`;
     badge.setAttribute('aria-label', badge.title);

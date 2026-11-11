@@ -15,13 +15,26 @@ function renderQuota(quota) {
   lastQuota = quota;
   const container = document.querySelector('#quota');
   container.replaceChildren();
+  const entries = quotaEntries(quota);
+  const allVisible = entries.every(entry => settings.hiddenQuotas?.[entry.key] !== true);
+  const master = document.querySelector('#quota-all');
+  master.disabled = entries.length === 0;
+  master.setAttribute('aria-checked', String(allVisible));
+  master.setAttribute('aria-label', allVisible ? '隐藏全部额度' : '显示全部额度');
+  master.title = allVisible ? '全部显示中，点击全部隐藏' : '点击全部显示在桌宠上';
+  master.onclick = () => {
+    const hiddenQuotas = allVisible ? Object.fromEntries(entries.map(entry => [entry.key, true])) : {};
+    settings = { ...settings, hiddenQuotas };
+    api.setting('hiddenQuotas', hiddenQuotas);
+    renderQuota(quota);
+  };
   if (!quota.ok) {
     const error = document.createElement('div');
     error.className = 'error';
     error.textContent = quota.error || '额度暂不可用';
     container.append(error);
   }
-  for (const entry of quotaEntries(quota)) {
+  for (const entry of entries) {
     const row = document.createElement('div');
     row.className = 'quota-row';
     const head = document.createElement('div');

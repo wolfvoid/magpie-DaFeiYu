@@ -1,18 +1,38 @@
 {
   "name": "magpie-dafeiyu",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "magpie-DaFeiYu — a macOS and Windows desktop pet for Magpie with live request lights, quota percentages and API wallet balances.",
-  "repository": { "type": "git", "url": "https://github.com/wolfvoid/magpie-DaFeiYu.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wolfvoid/magpie-DaFeiYu.git"
+  },
   "homepage": "https://github.com/wolfvoid/magpie-DaFeiYu#readme",
   "author": "wolfvoid",
   "license": "MIT",
-  "keywords": ["magpie", "macos", "windows", "desktop-pet", "dafeiyu", "deepseek", "electron", "quota-monitor"],
-  "files": ["magpie", "LICENSE", "THIRD_PARTY_NOTICES.md", "licenses"],
+  "keywords": [
+    "magpie",
+    "macos",
+    "windows",
+    "desktop-pet",
+    "dafeiyu",
+    "deepseek",
+    "electron",
+    "quota-monitor"
+  ],
+  "files": [
+    "magpie",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "licenses"
+  ],
   "magpie": {
     "page": {
       "title": "DaFeiYu",
-      "titles": { "zh": "蓝色大肥鱼", "zh-TW": "藍色大肥魚" },
+      "titles": {
+        "zh": "蓝色大肥鱼",
+        "zh-TW": "藍色大肥魚"
+      },
       "file": "magpie/index.html",
       "icon": "magpie/icon.png"
     },
@@ -32,4 +52,3 @@
     "jsonc-parser": "3.3.1"
   }
 }
-

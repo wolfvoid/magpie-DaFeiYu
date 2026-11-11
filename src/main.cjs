@@ -122,9 +122,6 @@ function menuItems() {
     { label: '蓝色大肥鱼 · Magpie 伴侣', enabled: false },
     { label: activity.label, enabled: false },
     { type: 'separator' },
-    { label: '✨ 放烟花', click: () => play('放烟花') },
-    { label: '🪄 凭空生花', click: () => play('凭空生花') },
-    { label: '🐋 蓝鲸现世', click: () => play('蓝鲸现世') },
     { label: '点播全部动作', submenu: catalog.categories.map(category => ({ label: category.id,
       submenu: category.actions.map(name => ({ label: name, click: () => play(name) })) })) },
     { type: 'separator' },
@@ -133,7 +130,6 @@ function menuItems() {
     { label: '跟随 Magpie 请求', type: 'checkbox', checked: settings.followTasks, click: item => changeSetting('followTasks', item.checked) },
     { label: '显示请求灯泡', type: 'checkbox', checked: settings.showBulbs, click: item => changeSetting('showBulbs', item.checked) },
     { label: '显示账号额度', type: 'checkbox', checked: settings.showQuotas, click: item => changeSetting('showQuotas', item.checked) },
-    { label: '恢复全部额度显示', click: () => changeSetting('hiddenQuotas', {}) },
     { label: '随机玩耍', type: 'checkbox', checked: settings.active, click: item => changeSetting('active', item.checked) },
     { label: '暂停动画', type: 'checkbox', checked: settings.paused, click: item => changeSetting('paused', item.checked) },
     { label: '锁定位置', type: 'checkbox', checked: settings.locked, click: item => changeSetting('locked', item.checked) },
@@ -209,6 +205,7 @@ function moveTick() {
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => { if (petWindow) showPet(); });
+  app.on('activate', () => { if (petWindow && !petWindow.isDestroyed() && !petWindow.isVisible()) showPet(); });
   app.whenReady().then(async () => {
     if (process.platform === 'darwin') app.dock?.hide();
     if (process.platform === 'win32') Menu.setApplicationMenu(null);
