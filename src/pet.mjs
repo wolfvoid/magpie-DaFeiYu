@@ -33,10 +33,16 @@ function describe() {
   lights.classList.toggle('unavailable', !activity.available);
   if (lights.dataset.count !== String(requests)) {
     lights.replaceChildren();
-    for (let index = 0; index < Math.max(1, requests); index++) {
+    for (let index = 0; index < Math.min(8, Math.max(1, requests)); index++) {
       const bulb = document.querySelector('#bulb-template').content.firstElementChild.cloneNode(true);
       bulb.classList.toggle('lit', requests > 0);
       lights.append(bulb);
+    }
+    if (requests > 8) {
+      const more = document.createElement('span');
+      more.className = 'bulb-more';
+      more.textContent = `+${requests - 8}`;
+      lights.append(more);
     }
     lights.dataset.count = String(requests);
   }

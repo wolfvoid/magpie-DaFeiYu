@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ActivityReader, chooseActivity, normalizeCards, readQuota, readLocal, activeAccountsForRoute } from '../src/magpie.mjs';
+import { ActivityReader, chooseActivity, normalizeCards, readQuota, readLocal, resolveKey, activeAccountsForRoute } from '../src/magpie.mjs';
 import { accountPercentages, compactQuotaLabel, quotaEntries } from '../src/quota-display.mjs';
 import { clampPetPosition } from '../src/position.cjs';
 import { AnimationDirector } from '../src/animation.mjs';
@@ -98,7 +98,14 @@ test('integration uses loopback GETs and returns sanitized snapshots', async () 
     assert.ok(call.url.startsWith('http://127.0.0.1:'));
     assert.equal(call.options.method, 'GET');
     assert.equal(call.options.redirect, 'error');
-    assert.equal(call.options.headers.Authorization, undefined);
+    assert.equal(call.options.headers.Authorization, 'Bearer magpie-dafeiyu');
+  }
+});
+
+test('a gateway key from MAGPIE_API_KEY is sent; invalid values fall back to the app token', () => {
+  assert.equal(resolveKey({ env: { MAGPIE_API_KEY: ' my-gateway-key ' } }), 'my-gateway-key');
+  for (const value of [undefined, '', 'short', 'has space key', 'x'.repeat(257)]) {
+    assert.equal(resolveKey({ env: { MAGPIE_API_KEY: value } }), 'magpie-dafeiyu');
   }
 });
 

@@ -1,8 +1,7 @@
 {
   "name": "magpie-dafeiyu",
-  "version": "0.1.4",
-  "private": true,
-  "description": "magpie-DaFeiYu — a macOS and Windows desktop pet for Magpie with live request lights, quota percentages and API wallet balances.",
+  "version": "0.1.5",
+  "description": "Magpie page for the DaFeiYu desktop pet (a separate app you download). Request bulbs, quota percentages and API balances for Windows and macOS. Artwork from PC2005-cloud/dsh-pet, non-commercial.",
   "repository": {
     "type": "git",
     "url": "https://github.com/wolfvoid/magpie-DaFeiYu.git"

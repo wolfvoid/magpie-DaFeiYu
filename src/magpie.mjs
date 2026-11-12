@@ -15,10 +15,15 @@ export function resolvePort({ env = process.env, home = homedir() } = {}) {
   return 3425;
 }
 
-export async function readLocal(route, { port = resolvePort(), fetcher = fetch, timeoutMs = 5000, maxBytes = 2000000 } = {}) {
+export function resolveKey({ env = process.env } = {}) {
+  const key = typeof env.MAGPIE_API_KEY === 'string' ? env.MAGPIE_API_KEY.trim() : '';
+  return /^[\x21-\x7e]{8,256}$/.test(key) ? key : 'magpie-dafeiyu';
+}
+
+export async function readLocal(route, { port = resolvePort(), key = resolveKey(), fetcher = fetch, timeoutMs = 5000, maxBytes = 2000000 } = {}) {
   const response = await fetcher(`http://127.0.0.1:${port}${route}`, {
     method: 'GET', redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
-    headers: { 'User-Agent': `Magpie-DaFeiYu/${version}` },
+    headers: { 'User-Agent': `Magpie-DaFeiYu/${version}`, Authorization: `Bearer ${key}` },
   });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const reader = response.body.getReader();

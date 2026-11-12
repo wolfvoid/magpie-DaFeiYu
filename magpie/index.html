@@ -1,28 +1,54 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>蓝色大肥鱼 · Magpie</title>
+  <title>DaFeiYu · Magpie</title>
   <link rel="stylesheet" href="page.css">
   <script src="_magpie/bridge.js"></script>
 </head>
 <body>
   <main>
-    <header><img src="icon.png" width="88" height="88" alt="蓝色大肥鱼应用图标"><div><p class="eyebrow">WIN · MAC × MAGPIE</p><h1>蓝色大肥鱼</h1><p>让 Magpie 的工作状态变成桌边的陪伴。</p></div></header>
-    <section><h2>桌边有鱼，工作有数</h2><ul>
-      <li>106 段透明动画，施法、烟花与日常小节目。</li>
-      <li>几个请求亮几盏灯；订阅显示百分比，API 钱包显示余额。</li>
-      <li>换动作、暂停、贴边拖动，账号多时横向滚动。</li>
-    </ul></section>
-    <section><h2>安装桌面 App</h2>
-      <p>这个插件是使用指南。安装插件不会自动安装或启动桌宠；桌面悬浮窗口需要单独下载 App。</p>
-      <ol><li>复制下方地址到浏览器，打开下载页，选择与系统匹配的压缩包：Windows 10+ x64 选 magpie-DaFeiYu-v0.1.2-Windows-x64.zip，Apple Silicon Mac 选 magpie-DaFeiYu-v0.1.2-macOS-arm64.zip。</li><li>macOS：解压后把「蓝色大肥鱼.app」拖入「应用程序」。Windows：解压后双击 BlueDaFeiYu.exe 便携运行，或按发布页说明运行 install.ps1 装进当前用户账户并创建开始菜单快捷方式（无需管理员权限，不自动启动）。</li><li>打开 App 与本机 Magpie，桌宠会读取请求状态和缓存额度。</li></ol>
-      <label for="download">GitHub 下载页（选中后复制）</label>
-      <input id="download" readonly value="https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest">
-      <p class="note">支持 Windows 10+ x64 与 Apple Silicon（M 系列）Mac / macOS 12+。macOS 版暂无 Apple Developer ID 签名或公证，Windows 版未签名；首次打开请按发布页说明确认来源。无需安装 DSH、Node.js 或 Python。</p>
+    <header>
+      <img src="icon.png" width="88" height="88" alt="">
+      <div>
+        <p class="eyebrow">WINDOWS · MACOS × MAGPIE</p>
+        <h1 data-i18n="title">DaFeiYu desktop pet</h1>
+        <p data-i18n="tagline">Magpie's live status, as a companion on your desktop.</p>
+      </div>
+    </header>
+    <section class="notice">
+      <h2 data-i18n="noticeTitle">This page is only a guide</h2>
+      <p data-i18n="notice">The desktop pet is a separate app that you download yourself. Installing this plugin does not install, download or start the app.</p>
     </section>
-    <footer>此页面不读取账号、密钥或聊天，不启动后台服务。<br>动画来源：github.com/PC2005-cloud/dsh-pet（非商用）；网关联动：yetone/magpie。<br>独立社区项目，非官方插件。</footer>
+    <section>
+      <h2 data-i18n="featuresTitle">What the app shows</h2>
+      <ul>
+        <li data-i18n="feature1">One bulb per request in progress.</li>
+        <li data-i18n="feature2">Quota percentages for subscriptions and balances for API wallets, each with its own switch.</li>
+        <li data-i18n="feature3">106 transparent animations; drag it to a screen edge.</li>
+      </ul>
+    </section>
+    <section>
+      <h2 data-i18n="installTitle">Install the app</h2>
+      <ol>
+        <li data-i18n="step1">Open the release page in your browser and download the ZIP for your system: Windows 10+ x64, or Apple Silicon Mac with macOS 12+.</li>
+        <li data-i18n="step2">macOS: unzip and drag the app to Applications. Windows: unzip and run BlueDaFeiYu.exe, or install.ps1 for a per-user install.</li>
+        <li data-i18n="step3">Start the app while Magpie runs on this computer.</li>
+      </ol>
+      <label for="download" data-i18n="downloadLabel">Release page (select and copy)</label>
+      <input id="download" readonly value="https://github.com/wolfvoid/magpie-DaFeiYu/releases/latest">
+      <p class="note" data-i18n="signing">The macOS build is ad-hoc signed only, not notarized; the Windows build is unsigned. Check the source before opening it the first time.</p>
+    </section>
+    <section>
+      <h2 data-i18n="privacyTitle">How it talks to Magpie</h2>
+      <p data-i18n="privacy">The app reads Magpie on this computer only (127.0.0.1): request status every 2 seconds, quota cards every 30 seconds. It sends the token magpie-dafeiyu, or MAGPIE_API_KEY when you set one. This page reads nothing.</p>
+    </section>
+    <footer>
+      <p data-i18n="credits">Character and animations: PC2005-cloud/dsh-pet, non-commercial use only. Gateway: yetone/magpie.</p>
+      <p data-i18n="unofficial">An independent community project, not an official Magpie plugin.</p>
+    </footer>
   </main>
+  <script src="page.js"></script>
 </body>
 </html>
